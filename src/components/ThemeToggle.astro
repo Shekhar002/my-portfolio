@@ -1,0 +1,51 @@
+---
+/**
+ * Dark/light switch. Plain <script>, no React: it's a few lines and must not
+ * wait for hydration. The initial theme is set by an inline script in
+ * Layout.astro before first paint, so there's no flash.
+ */
+---
+
+<button
+  type="button"
+  data-theme-toggle
+  class="label inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-muted transition-colors hover:border-fg hover:text-fg"
+>
+  <span aria-hidden="true" class="size-2 rounded-full bg-fg"></span>
+  <span>
+    theme: <span data-theme-name>dark</span>
+  </span>
+  <span class="sr-only">(switch theme)</span>
+</button>
+
+<script>
+  const root = document.documentElement;
+
+  function sync() {
+    const current = root.dataset.theme === 'light' ? 'light' : 'dark';
+    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((el) => {
+      el.textContent = current;
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+      btn.setAttribute(
+        'aria-label',
+        `Theme: ${current}. Switch to ${current === 'dark' ? 'light' : 'dark'}`,
+      );
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        /* storage blocked: theme still applies for this visit */
+      }
+      sync();
+    });
+  });
+
+  sync();
+</script>

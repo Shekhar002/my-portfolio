@@ -1,0 +1,22 @@
+[
+  {
+    "id": "monash",
+    "institution": "Monash University",
+    "qualification": "Master of Data Science",
+    "location": "Clayton, VIC",
+    "start": "2022-07",
+    "end": "2024-06",
+    "coursework": ["Data Engineering", "Machine Learning", "Data Visualisation"],
+    "order": 1
+  },
+  {
+    "id": "ggsipu",
+    "institution": "Guru Gobind Singh Indraprastha University",
+    "qualification": "Bachelor of Technology, Computer Science",
+    "location": "Delhi, India",
+    "start": "2017-07",
+    "end": "2021-06",
+    "coursework": [],
+    "order": 2
+  }
+]

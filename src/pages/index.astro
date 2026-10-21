@@ -1,10 +1,17 @@
 ---
+import { getEntry } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+
+// Placeholder until Phase 2 builds the real sections.
+const profile = await getEntry('profile', 'shekhar');
+if (!profile) throw new Error('src/content/profile.json must contain a "shekhar" entry');
+const { name, headline, tagline } = profile.data;
 ---
 
-<Layout title="Shekhar Tyagi">
-  <main>
-    <h1>Shekhar Tyagi</h1>
-    <p>Site under construction.</p>
+<Layout title={`${name} · ${headline}`}>
+  <main class="bg-data-grid page flex min-h-dvh flex-col justify-center gap-6">
+    <p class="label text-muted">{headline}</p>
+    <h1 class="font-display text-display-xl uppercase">{name}</h1>
+    <p class="max-w-xl text-lg text-muted">{tagline}</p>
   </main>
 </Layout>

@@ -1,0 +1,35 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'a'> & {
+  href: string;
+  variant?: 'primary' | 'secondary';
+};
+
+const { href, variant = 'primary', class: className, ...rest } = Astro.props;
+const external = /^https?:\/\//.test(href);
+
+const variants = {
+  primary: 'bg-clean-fill text-on-fill hover:bg-fg hover:text-bg',
+  secondary: 'border border-line text-fg hover:border-fg',
+};
+---
+
+<a
+  href={href}
+  class:list={[
+    'label inline-flex items-center gap-2 rounded-full px-5 py-3 transition-colors duration-200',
+    variants[variant],
+    className,
+  ]}
+  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+  {...rest}
+>
+  <slot />
+  {external && (
+    <span aria-hidden="true" class="text-[1.1em] leading-none">
+      ↗
+    </span>
+  )}
+  {external && <span class="sr-only">(opens in a new tab)</span>}
+</a>

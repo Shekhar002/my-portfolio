@@ -1,0 +1,25 @@
+{
+  "shekhar": {
+    "name": "Shekhar Tyagi",
+    "headline": "Technical Data Consultant",
+    "tagline": "ETL pipelines on SAP HANA · SAP SuccessFactors data migration",
+    "location": "Melbourne, VIC",
+    "status": "Migrating HR & payroll data at EPI-USE",
+    "bio": [
+      "I'm a Technical Data Consultant at EPI-USE in Melbourne. I build production ETL pipelines on SAP HANA that move HR and payroll data out of legacy systems and into SAP SuccessFactors for ASX-listed and multinational clients.",
+      "Most days I'm writing SQL (multi-source joins, window functions, correlated subqueries, stored procedures) and wiring it into HANA flowgraphs. I own delivery end to end, from source analysis and data modelling through transformation, pre-load validation, loads and post-load reconciliation. My largest engagement moved more than 4,200 employees' AU and NZ payroll data into SuccessFactors ahead of go-live.",
+      "I came to this through a Master of Data Science at Monash, where I studied data engineering, machine learning and data visualisation. I still reach for Python, Power BI, Tableau and React when a problem calls for them. I work documentation-first, so business and technical stakeholders can trace every transformation from source to target."
+    ],
+    "links": {
+      "linkedin": "https://www.linkedin.com/in/shekhar-tyagi-61564b149",
+      "github": "https://github.com/Shekhar002",
+      "cv": "/cv/Shekhar-Tyagi-CV.pdf"
+    },
+    "quickFacts": [
+      { "label": "Based", "value": "Melbourne, VIC" },
+      { "label": "Focus", "value": "HR & payroll data migration" },
+      { "label": "Daily tools", "value": "SQL · SAP HANA · Python" },
+      { "label": "Study", "value": "Master of Data Science, Monash" }
+    ]
+  }
+}

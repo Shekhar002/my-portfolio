@@ -1,0 +1,65 @@
+[
+  { "id": "hana-sql", "name": "SAP HANA SQL", "category": "sql", "level": "expert" },
+  {
+    "id": "sqlscript",
+    "name": "SQLScript stored procedures",
+    "category": "sql",
+    "level": "advanced"
+  },
+  { "id": "window-functions", "name": "Window functions", "category": "sql", "level": "expert" },
+  {
+    "id": "correlated-subqueries",
+    "name": "Correlated subqueries",
+    "category": "sql",
+    "level": "advanced"
+  },
+  {
+    "id": "data-modelling",
+    "name": "Relational data modelling",
+    "category": "sql",
+    "level": "advanced"
+  },
+  { "id": "etl-design", "name": "ETL pipeline design", "category": "etl", "level": "expert" },
+  { "id": "hana-flowgraphs", "name": "SAP HANA flowgraphs", "category": "etl", "level": "expert" },
+  {
+    "id": "staging-control",
+    "name": "Staging & control tables",
+    "category": "etl",
+    "level": "advanced"
+  },
+  {
+    "id": "validation-recon",
+    "name": "Validation & reconciliation",
+    "category": "etl",
+    "level": "expert"
+  },
+  {
+    "id": "source-to-target",
+    "name": "Source-to-target mapping",
+    "category": "etl",
+    "level": "expert"
+  },
+  { "id": "data-masking", "name": "Data masking", "category": "etl", "level": "advanced" },
+  { "id": "python", "name": "Python (pandas)", "category": "programming", "level": "advanced" },
+  { "id": "r", "name": "R", "category": "programming", "level": "working" },
+  {
+    "id": "machine-learning",
+    "name": "Machine learning",
+    "category": "ml",
+    "level": "working",
+    "note": "Monash coursework"
+  },
+  { "id": "power-bi", "name": "Power BI", "category": "bi", "level": "advanced" },
+  { "id": "tableau", "name": "Tableau", "category": "bi", "level": "working" },
+  { "id": "excel", "name": "Excel (advanced)", "category": "bi", "level": "advanced" },
+  { "id": "react", "name": "React", "category": "frontend", "level": "working" },
+  { "id": "javascript", "name": "JavaScript", "category": "frontend", "level": "working" },
+  { "id": "tailwind", "name": "Tailwind CSS", "category": "frontend", "level": "working" },
+  { "id": "sap-hana", "name": "SAP HANA", "category": "platform", "level": "expert" },
+  {
+    "id": "sap-sf-ec",
+    "name": "SAP SuccessFactors Employee Central",
+    "category": "platform",
+    "level": "advanced"
+  }
+]

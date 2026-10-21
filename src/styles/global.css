@@ -1,1 +1,148 @@
 @import 'tailwindcss';
+
+/*
+ * Design tokens
+ * ──────────────
+ * Raw values live in plain CSS variables that switch with [data-theme].
+ * `@theme inline` then exposes them to Tailwind as utilities: `bg-bg`,
+ * `text-muted`, `border-line`, `text-clean`, `font-display` and so on.
+ * Change a colour here and every component follows.
+ *
+ * Colour has meaning on this site:
+ *   clean (lime) = validated, transformed, loaded data
+ *   dirty (red)  = raw, conflicting, failed records
+ * Use them for that story, not as general decoration.
+ */
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --c-bg: #0e0e0e;
+  --c-surface: #171717;
+  --c-fg: #f2f2ee;
+  --c-muted: #a3a3a0; /* body copy secondary, 7.6:1 */
+  --c-subtle: #6b6b68; /* decoration only, never meaning */
+  --c-line: #2a2a2a;
+  --c-clean: #c6f432; /* text-safe, 15:1 */
+  --c-dirty: #ff5a36; /* text-safe, 6.2:1 */
+  --c-clean-fill: #c6f432; /* behind ink text */
+  --c-dirty-fill: #ff5a36;
+  --c-on-fill: #0e0e0e;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --c-bg: #f2f2ee;
+  --c-surface: #e8e8e3;
+  --c-fg: #0e0e0e;
+  --c-muted: #55554f; /* 6.1:1 on surface */
+  --c-subtle: #8a8a84;
+  --c-line: #d2d2cc;
+  --c-clean: #426a00; /* 4.5:1+ on surface */
+  --c-dirty: #b5320d;
+  --c-clean-fill: #c6f432;
+  --c-dirty-fill: #ff5a36;
+  --c-on-fill: #0e0e0e;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-subtle: var(--c-subtle);
+  --color-line: var(--c-line);
+  --color-clean: var(--c-clean);
+  --color-dirty: var(--c-dirty);
+  --color-clean-fill: var(--c-clean-fill);
+  --color-dirty-fill: var(--c-dirty-fill);
+  --color-on-fill: var(--c-on-fill);
+
+  /* Variables registered by the Astro Fonts API in astro.config.mjs */
+  --font-display: var(--font-league-gothic);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+@theme {
+  /* Display scale: tall condensed caps, fluid with the viewport */
+  --text-display-xl: clamp(5.5rem, 19vw, 16rem);
+  --text-display-xl--line-height: 0.82;
+  --text-display-lg: clamp(3.75rem, 11vw, 9rem);
+  --text-display-lg--line-height: 0.85;
+  --text-display-md: clamp(2.75rem, 6vw, 5rem);
+  --text-display-md--line-height: 0.9;
+  --text-display-sm: clamp(2rem, 3.5vw, 3rem);
+  --text-display-sm--line-height: 0.95;
+
+  /* Mono labels: pipeline stages, table headers, metadata */
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.08em;
+
+  --container-page: 84rem;
+  --spacing-section: clamp(6rem, 14vw, 11rem);
+  --spacing-gutter: clamp(1rem, 4vw, 2.5rem);
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@layer base {
+  html {
+    background: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--c-bg);
+  }
+
+  ::selection {
+    background: var(--c-clean-fill);
+    color: var(--c-on-fill);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-clean);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Page-wide dot grid, like a data canvas */
+  .bg-data-grid {
+    background-image: radial-gradient(var(--c-line) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
+    letter-spacing: var(--text-label--letter-spacing);
+    text-transform: uppercase;
+  }
+
+  .page {
+    margin-inline: auto;
+    max-width: var(--container-page);
+    padding-inline: var(--spacing-gutter);
+  }
+}
