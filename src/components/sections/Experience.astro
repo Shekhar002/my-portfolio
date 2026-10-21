@@ -7,6 +7,7 @@
 import { getCaseStudies, getExperienceTree } from '../../lib/content';
 import { formatRange } from '../../lib/format';
 import { url } from '../../lib/url';
+import Flowgraph from '../Flowgraph.astro';
 import MetricList from '../MetricList.astro';
 import StageHeader from '../StageHeader.astro';
 
@@ -22,9 +23,11 @@ const kindLabel: Record<string, string> = {
 <section id="experience" aria-labelledby="experience-title" class="page scroll-mt-16 pt-section">
   <StageHeader stage="transform" title="Experience" id="experience-title" />
 
+  <Flowgraph />
+
   <ol class="space-y-20">
     {career.map((job) => (
-      <li class="grid gap-6 md:grid-cols-[11rem_1fr] md:gap-10">
+      <li id={`exp-${job.id}`} class="grid scroll-mt-24 gap-6 md:grid-cols-[11rem_1fr] md:gap-10">
         <p class="label pt-2 text-muted">
           {formatRange(job.data.period.start, job.data.period.end)}
         </p>
@@ -68,7 +71,7 @@ const kindLabel: Record<string, string> = {
           {job.children.length > 0 && (
             <ol class="relative mt-10 space-y-4 border-l border-line pl-6 md:pl-8">
               {job.children.map((child) => (
-                <li class="relative">
+                <li id={`exp-${child.id}`} class="relative scroll-mt-24">
                   <span
                     aria-hidden="true"
                     class="absolute top-6 -left-6 h-px w-6 bg-line md:-left-8 md:w-8"
@@ -105,11 +108,7 @@ const kindLabel: Record<string, string> = {
                         ))}
                       </ul>
                       {child.data.metrics.length > 0 && (
-                        <MetricList
-                          metrics={child.data.metrics}
-                          size="sm"
-                          class="mt-6 sm:grid-cols-4"
-                        />
+                        <MetricList metrics={child.data.metrics} size="sm" class="mt-6" />
                       )}
                       {child.data.stack.length > 0 && (
                         <ul class="mt-6 flex flex-wrap gap-2" aria-label="Tools used">
@@ -148,7 +147,10 @@ const kindLabel: Record<string, string> = {
       <h3 class="label pt-1 text-muted">Beyond work</h3>
       <ul class="divide-y divide-line border-y border-line">
         {beyond.map((item) => (
-          <li class="grid gap-2 py-6 md:grid-cols-[1fr_auto] md:gap-8">
+          <li
+            id={`exp-${item.id}`}
+            class="grid scroll-mt-24 gap-2 py-6 md:grid-cols-[1fr_auto] md:gap-8"
+          >
             <div>
               <p class="text-lg text-fg">{item.data.org}</p>
               <p class="mt-1 text-muted">

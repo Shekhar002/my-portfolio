@@ -1,0 +1,375 @@
+---
+/**
+ * Career as a HANA-style flowgraph: SOURCE → JOIN → PROJECTION → TARGET.
+ *
+ * Built entirely at build time from the content collections, so it renders
+ * (and every node link works) without JavaScript. A small script adds:
+ *  - lineage highlighting on hover/focus (all upstream + downstream nodes),
+ *  - opening the matching <details> card when a node is clicked,
+ *  - a draw-in reveal when the graph scrolls into view.
+ * Shown from the xl breakpoint (1280px), where long client names fit; smaller
+ * screens use the nested list below it.
+ */
+import { getCollection } from 'astro:content';
+import { getExperienceTree } from '../lib/content';
+import { formatNumber, formatRange } from '../lib/format';
+
+type Kind = 'source' | 'join' | 'projection' | 'target';
+
+interface FlowNode {
+  id: string;
+  col: number;
+  kind: Kind;
+  typeLabel: string;
+  title: string;
+  lines: string[];
+  period?: string;
+  metric?: string;
+  href: string;
+}
+
+/* ── Build nodes from content ───────────────────────────────────── */
+const { career } = await getExperienceTree();
+const all = await getCollection('experience');
+const education = (await getCollection('education')).sort((a, b) => a.data.order - b.data.order);
+
+const shortRange = (start: string, end: string) =>
+  formatRange(start, end).replace(/[A-Z][a-z]{2} (\d{4})/g, '$1');
+const firstMetric = (m: { value: number; suffix?: string; label: string }[]) =>
+  m[0] ? `${formatNumber(m[0].value)}${m[0].suffix ?? ''} ${m[0].label}` : undefined;
+
+const nodes: FlowNode[] = [];
+
+const [latestStudy, ...earlierStudy] = education;
+if (latestStudy) {
+  nodes.push({
+    id: 'education',
+    col: 0,
+    kind: 'source',
+    typeLabel: 'source · education',
+    title: latestStudy.data.qualification,
+    lines: [
+      `${latestStudy.data.institution} · ${shortRange(latestStudy.data.start, latestStudy.data.end)}`,
+      ...earlierStudy.map(
+        (e) => `${e.data.qualification} · ${shortRange(e.data.start, e.data.end)}`,
+      ),
+    ],
+    href: `#edu-${latestStudy.id}`,
+  });
+}
+
+const joins = all
+  .filter((e) => e.data.kind === 'internship' || e.data.kind === 'leadership')
+  .sort((a, b) => a.data.period.start.localeCompare(b.data.period.start));
+for (const e of joins) {
+  nodes.push({
+    id: e.id,
+    col: 1,
+    kind: 'join',
+    typeLabel: `join · ${e.data.kind}`,
+    title: e.data.org,
+    lines: [e.data.roles.at(-1)!],
+    period: shortRange(e.data.period.start, e.data.period.end),
+    metric: firstMetric(e.data.metrics),
+    href: `#exp-${e.id}`,
+  });
+}
+
+const employer = career.find((c) => c.data.kind === 'employer');
+if (employer) {
+  nodes.push({
+    id: employer.id,
+    col: 2,
+    kind: 'projection',
+    typeLabel: 'projection · employer',
+    title: employer.data.org,
+    lines: [employer.data.roles.at(-1)!],
+    period: shortRange(employer.data.period.start, employer.data.period.end),
+    metric: firstMetric(employer.data.metrics),
+    href: `#exp-${employer.id}`,
+  });
+  for (const child of employer.children) {
+    nodes.push({
+      id: child.id,
+      col: 3,
+      kind: 'target',
+      typeLabel: `target · ${child.data.sector ?? 'internal'}`,
+      title: child.data.org,
+      lines: [],
+      period: shortRange(child.data.period.start, child.data.period.end),
+      metric: firstMetric(child.data.metrics),
+      href: `#exp-${child.id}`,
+    });
+  }
+}
+
+/* ── Edges: every node in a column feeds every node in the next ── */
+const byCol = (c: number) => nodes.filter((n) => n.col === c);
+const edges: { from: FlowNode; to: FlowNode; id: string }[] = [];
+for (let c = 0; c < 3; c++) {
+  for (const from of byCol(c)) {
+    for (const to of byCol(c + 1)) edges.push({ from, to, id: `${from.id}--${to.id}` });
+  }
+}
+
+/* ── Lineage: ancestors + descendants of each node ─────────────── */
+function walk(start: string, dir: 'up' | 'down', seen = new Set<string>()) {
+  for (const e of edges) {
+    const [a, b] = dir === 'down' ? [e.from.id, e.to.id] : [e.to.id, e.from.id];
+    if (a === start && !seen.has(b)) {
+      seen.add(b);
+      walk(b, dir, seen);
+    }
+  }
+  return seen;
+}
+const lineage = new Map(
+  nodes.map((n) => {
+    const related = new Set([n.id, ...walk(n.id, 'up'), ...walk(n.id, 'down')]);
+    const edgeIds = edges
+      .filter((e) => related.has(e.from.id) && related.has(e.to.id))
+      .map((e) => e.id);
+    return [n.id, [...related, ...edgeIds].join(' ')];
+  }),
+);
+
+/* ── Layout in a 1200 × 680 coordinate space (scales uniformly) ── */
+const VIEW_W = 1200;
+const VIEW_H = 680;
+const COLS = [
+  { x: 0, w: 220 },
+  { x: 315, w: 220 },
+  { x: 630, w: 220 },
+  { x: 945, w: 255 },
+];
+const pos = new Map(
+  nodes.map((n) => {
+    const column = byCol(n.col);
+    const i = column.indexOf(n);
+    return [
+      n.id,
+      { x: COLS[n.col]!.x, w: COLS[n.col]!.w, y: (VIEW_H * (i + 0.5)) / column.length },
+    ];
+  }),
+);
+const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(3)}%`;
+
+function edgePath(fromId: string, toId: string) {
+  const a = pos.get(fromId)!;
+  const b = pos.get(toId)!;
+  const x1 = a.x + a.w;
+  const x2 = b.x;
+  const dx = (x2 - x1) * 0.55;
+  return `M ${x1} ${a.y} C ${x1 + dx} ${a.y}, ${x2 - dx} ${b.y}, ${x2} ${b.y}`;
+}
+
+const columnLabels = ['01 source', '02 join', '03 projection', '04 target'];
+const marker: Record<Kind, string> = {
+  source: 'bg-dirty',
+  join: 'bg-fg',
+  projection: 'bg-fg',
+  target: 'bg-clean',
+};
+---
+
+<div data-flowgraph class="mb-24 hidden xl:block">
+  <div class="label mb-4 flex items-center justify-between text-muted">
+    <span>flowgraph: career.hdbflowgraph</span>
+    <span>Hover a node to trace its lineage · click to open</span>
+  </div>
+
+  <div class="rounded-lg border border-line bg-surface/40 p-8">
+    <!-- Operator column headings -->
+    <div class="relative mb-6 h-4">
+      {columnLabels.map((label, c) => (
+        <span
+          class="label absolute top-0 text-muted"
+          style={`left: ${pct(COLS[c]!.x, VIEW_W)}; width: ${pct(COLS[c]!.w, VIEW_W)}`}
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+
+    <div class="relative" style={`aspect-ratio: ${VIEW_W} / ${VIEW_H}`}>
+      <svg
+        class="absolute inset-0 size-full overflow-visible"
+        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+        aria-hidden="true"
+      >
+        {edges.map((e, i) => (
+          <g data-edge={e.id} style={`--d: ${e.from.col * 180 + 120}ms`}>
+            <path
+              id={`fg-${e.id}`}
+              class="edge"
+              d={edgePath(e.from.id, e.to.id)}
+              pathLength="1"
+              fill="none"
+              vector-effect="non-scaling-stroke"
+            />
+            <circle r="3.5" class="flow-dot">
+              <animateMotion
+                dur={`${2.8 + (i % 3) * 0.4}s`}
+                begin={`${(i * 0.37) % 2.4}s`}
+                repeatCount="indefinite"
+              >
+                <mpath href={`#fg-${e.id}`} />
+              </animateMotion>
+            </circle>
+          </g>
+        ))}
+      </svg>
+
+      <ol class="contents" role="list" aria-label="Career flowgraph">
+        {nodes.map((n) => {
+          const p = pos.get(n.id)!;
+          return (
+            <li
+              class="node absolute"
+              style={`left: ${pct(p.x, VIEW_W)}; top: ${pct(p.y, VIEW_H)}; width: ${pct(p.w, VIEW_W)}; --d: ${n.col * 180}ms`}
+              data-node={n.id}
+              data-lineage={lineage.get(n.id)}
+            >
+              <a
+                href={n.href}
+                class="block rounded-lg border border-line bg-bg p-3 transition-colors hover:border-fg focus-visible:border-fg"
+              >
+                <span class="label flex items-center gap-2 text-[0.625rem] text-muted">
+                  <span aria-hidden="true" class:list={['size-1.5 shrink-0', marker[n.kind]]} />
+                  {n.typeLabel}
+                </span>
+                <span class="mt-2 block text-sm leading-snug font-medium text-fg">{n.title}</span>
+                {n.lines.map((line) => (
+                  <span class="mt-1 block text-xs leading-snug text-muted">{line}</span>
+                ))}
+                {(n.period || n.metric) && (
+                  <span class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-line pt-2 font-mono text-[0.625rem] text-muted">
+                    {n.period && <span>{n.period}</span>}
+                    {n.metric && <span class="text-clean">{n.metric}</span>}
+                  </span>
+                )}
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </div>
+</div>
+
+<style>
+  .node {
+    transform: translateY(-50%);
+    transition:
+      opacity 0.5s var(--ease-out-quart) var(--d, 0ms),
+      transform 0.5s var(--ease-out-quart) var(--d, 0ms);
+  }
+
+  .edge {
+    stroke: var(--c-subtle);
+    stroke-width: 1.25;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    transition:
+      stroke 0.25s ease,
+      stroke-width 0.25s ease,
+      opacity 0.25s ease,
+      stroke-dashoffset 0.9s var(--ease-out-quart) var(--d, 0ms);
+  }
+
+  .flow-dot {
+    fill: var(--c-clean);
+    opacity: 0.7;
+    transition: opacity 0.25s ease;
+  }
+
+  /* Reveal: only armed by the script, so no-JS visitors see everything. */
+  [data-flowgraph][data-reveal='pending'] .node {
+    opacity: 0;
+    transform: translateY(calc(-50% + 14px));
+  }
+  [data-flowgraph][data-reveal='pending'] .edge {
+    stroke-dashoffset: 1;
+  }
+  [data-flowgraph][data-reveal='pending'] .flow-dot {
+    opacity: 0;
+  }
+
+  /* Lineage highlight */
+  [data-flowgraph][data-tracing] .node:not([data-lit]) {
+    opacity: 0.3;
+  }
+  [data-flowgraph][data-tracing] [data-edge]:not([data-lit]) .edge {
+    opacity: 0.25;
+  }
+  [data-flowgraph][data-tracing] [data-edge]:not([data-lit]) .flow-dot {
+    opacity: 0;
+  }
+  [data-edge][data-lit] .edge {
+    stroke: var(--c-clean);
+    stroke-width: 2;
+  }
+  [data-edge][data-lit] .flow-dot {
+    opacity: 1;
+  }
+  .node[data-lit] a {
+    border-color: var(--c-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow-dot {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const graph = document.querySelector<HTMLElement>('[data-flowgraph]');
+
+  if (graph) {
+    const nodes = [...graph.querySelectorAll<HTMLElement>('[data-node]')];
+    const edges = [...graph.querySelectorAll<SVGGElement>('[data-edge]')];
+
+    const trace = (node: HTMLElement | null) => {
+      const ids = new Set(node?.dataset.lineage?.split(' ') ?? []);
+      graph.toggleAttribute('data-tracing', !!node);
+      nodes.forEach((n) => n.toggleAttribute('data-lit', ids.has(n.dataset.node!)));
+      edges.forEach((e) => e.toggleAttribute('data-lit', ids.has(e.dataset.edge!)));
+    };
+
+    nodes.forEach((node) => {
+      const link = node.querySelector('a');
+      node.addEventListener('mouseenter', () => trace(node));
+      node.addEventListener('mouseleave', () => trace(null));
+      link?.addEventListener('focus', () => trace(node));
+      link?.addEventListener('blur', () => trace(null));
+    });
+
+    // Draw the graph in when it first scrolls into view.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      graph.dataset.reveal = 'pending';
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry?.isIntersecting) return;
+          graph.dataset.reveal = 'done';
+          io.disconnect();
+        },
+        { threshold: 0.25 },
+      );
+      io.observe(graph);
+    }
+  }
+
+  // Any in-page link to an experience entry opens its card (flowgraph nodes, case-study links, direct URLs).
+  function openFromHash(hash: string) {
+    if (!hash.startsWith('#exp-')) return;
+    const details = document.getElementById(hash.slice(1))?.querySelector('details');
+    if (details) details.open = true;
+  }
+  window.addEventListener('hashchange', () => openFromHash(location.hash));
+  document.addEventListener('click', (e) => {
+    const link = (e.target as Element).closest<HTMLAnchorElement>('a[href*="#exp-"]');
+    if (link) openFromHash(new URL(link.href).hash);
+  });
+  openFromHash(location.hash);
+</script>
