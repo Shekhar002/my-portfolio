@@ -1,0 +1,474 @@
+---
+/**
+ * Command palette: press "/" (or Ctrl/⌘+K, or the header button) for a
+ * psql-style prompt that navigates the site with SQL-flavoured commands.
+ *
+ * The command list is built at build time from the content collections and
+ * shipped as JSON; the script filters and runs it. Uses a native <dialog>
+ * for focus trapping, Esc-to-close and inert background.
+ */
+import { getCollection } from 'astro:content';
+import { getCaseStudies, getProfile } from '../lib/content';
+import { SKILL_CATEGORIES } from '../lib/skills';
+import { url } from '../lib/url';
+
+type Group = 'nav' | 'query' | 'action' | 'secret';
+type Run =
+  | { type: 'href'; href: string }
+  | { type: 'external'; href: string }
+  | { type: 'download'; href: string }
+  | { type: 'skills'; category: string | null; href: string }
+  | { type: 'theme'; theme: 'light' | 'dark' }
+  | { type: 'event'; name: string }
+  | { type: 'output'; lines: string[]; tone: 'ok' | 'error' };
+
+interface Command {
+  id: string;
+  group: Group;
+  query: string;
+  desc: string;
+  run: Run;
+  requires?: string;
+}
+
+const profile = await getProfile();
+const projects = await getCaseStudies();
+const education = (await getCollection('education')).sort((a, b) => a.data.order - b.data.order);
+const skillCategories = [
+  ...new Set((await getCollection('skills')).map((s) => s.data.category)),
+].sort((a, b) => SKILL_CATEGORIES[a].order - SKILL_CATEGORIES[b].order);
+
+const home = url('/');
+const sections = [
+  ['home', 'Back to the top', '#main'],
+  ['about', 'Bio and quick facts', '#about'],
+  ['experience', 'Career flowgraph and timeline', '#experience'],
+  ['work', 'Case studies', '#work'],
+  ['skills', 'Skills, study and certification', '#skills'],
+  ['contact', 'LinkedIn, GitHub and CV', '#contact'],
+] as const;
+
+const commands: Command[] = [
+  ...sections.map(([id, desc, hash]) => ({
+    id: `go-${id}`,
+    group: 'nav' as const,
+    query: `\\go ${id}`,
+    desc,
+    run: { type: 'href' as const, href: `${home}${hash}` },
+  })),
+  {
+    id: 'q-experience',
+    group: 'query',
+    query: 'SELECT * FROM shekhar.experience;',
+    desc: 'Every role and engagement',
+    run: { type: 'href', href: `${home}#experience` },
+  },
+  {
+    id: 'q-projects',
+    group: 'query',
+    query: 'SELECT * FROM shekhar.projects;',
+    desc: `${projects.length} case studies`,
+    run: { type: 'href', href: `${home}#work` },
+  },
+  ...projects.map((p) => ({
+    id: `q-project-${p.id}`,
+    group: 'query' as const,
+    query: `SELECT * FROM shekhar.projects WHERE slug = '${p.id}';`,
+    desc: p.data.title,
+    run: { type: 'href' as const, href: url(`/work/${p.id}/`) },
+  })),
+  {
+    id: 'q-skills',
+    group: 'query',
+    query: 'SELECT * FROM shekhar.skills;',
+    desc: 'The full schema',
+    run: { type: 'skills', category: null, href: `${home}#skills` },
+  },
+  ...skillCategories.map((c) => ({
+    id: `q-skills-${c}`,
+    group: 'query' as const,
+    query: `SELECT * FROM shekhar.skills WHERE data_type = '${SKILL_CATEGORIES[c].label}';`,
+    desc: `Filter skills to ${SKILL_CATEGORIES[c].label}`,
+    run: { type: 'skills' as const, category: c, href: `${home}?skills=${c}#skills` },
+  })),
+  {
+    id: 'q-education',
+    group: 'query',
+    query: 'SELECT * FROM shekhar.education;',
+    desc: education.map((e) => e.data.qualification).join(' · '),
+    run: { type: 'href', href: `${home}#edu-${education[0]?.id ?? ''}` },
+  },
+  {
+    id: 'a-cv',
+    group: 'action',
+    query: '\\download cv',
+    desc: 'Download the CV (PDF)',
+    run: { type: 'download', href: url(profile.links.cv) },
+  },
+  {
+    id: 'a-linkedin',
+    group: 'action',
+    query: '\\open linkedin',
+    desc: 'Opens in a new tab',
+    run: { type: 'external', href: profile.links.linkedin },
+  },
+  {
+    id: 'a-github',
+    group: 'action',
+    query: '\\open github',
+    desc: 'Opens in a new tab',
+    run: { type: 'external', href: profile.links.github },
+  },
+  {
+    id: 'a-light',
+    group: 'action',
+    query: '\\theme light',
+    desc: 'Switch to the light theme',
+    run: { type: 'theme', theme: 'light' },
+  },
+  {
+    id: 'a-dark',
+    group: 'action',
+    query: '\\theme dark',
+    desc: 'Switch to the dark theme',
+    run: { type: 'theme', theme: 'dark' },
+  },
+  {
+    id: 'a-replay',
+    group: 'action',
+    query: '\\replay pipeline',
+    desc: 'Run the hero animation again',
+    run: { type: 'event', name: 'hero:replay' },
+    requires: '[data-hero-canvas]:not(.opacity-0)', // only once the 3D field is running
+  },
+  // Only shown when typed (prefix match), never in the default list.
+  {
+    id: 's-drop',
+    group: 'secret',
+    query: 'DROP TABLE shekhar;',
+    desc: '',
+    run: {
+      type: 'output',
+      tone: 'error',
+      lines: [
+        'ERROR:  permission denied for table shekhar',
+        'HINT:  this table is append-only. Nice try.',
+      ],
+    },
+  },
+  {
+    id: 's-select-1',
+    group: 'secret',
+    query: 'SELECT 1;',
+    desc: '',
+    run: { type: 'output', tone: 'ok', lines: [' ?column?', '----------', '        1', '(1 row)'] },
+  },
+  {
+    id: 's-version',
+    group: 'secret',
+    query: 'SELECT version();',
+    desc: '',
+    run: {
+      type: 'output',
+      tone: 'ok',
+      lines: ['shekhar 2026 on Astro, compiled from source → transform → target', '(1 row)'],
+    },
+  },
+];
+
+const groupLabel: Record<Exclude<Group, 'secret'>, string> = {
+  nav: 'navigate',
+  query: 'query',
+  action: 'action',
+};
+---
+
+<dialog
+  data-palette
+  aria-label="Command palette"
+  class="m-auto mt-[12vh] w-[min(42rem,calc(100%-2rem))] overflow-hidden rounded-lg border border-line bg-surface p-0 text-fg shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+>
+  <form
+    method="dialog"
+    data-palette-form
+    class="flex items-center gap-3 border-b border-line px-4 py-3.5"
+  >
+    <label for="palette-input" class="shrink-0 font-mono text-sm text-clean">
+      shekhar=#
+    </label>
+    <input
+      id="palette-input"
+      data-palette-input
+      type="text"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="palette-results"
+      aria-autocomplete="list"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      placeholder="type a command or \?"
+      class="min-w-0 flex-1 bg-transparent font-mono text-sm text-fg outline-none placeholder:text-subtle"
+    />
+    <kbd class="label hidden rounded border border-line px-1.5 py-0.5 text-muted sm:block">esc</kbd>
+  </form>
+
+  <ul
+    id="palette-results"
+    data-palette-results
+    role="listbox"
+    aria-label="Commands"
+    class="max-h-[min(55vh,26rem)] overflow-y-auto p-2"
+  ></ul>
+
+  <pre
+    data-palette-output
+    hidden
+    role="status"
+    class="m-2 overflow-x-auto rounded-md border border-line bg-bg p-4 font-mono text-xs leading-relaxed"
+  ></pre>
+
+  <div class="label flex items-center justify-between gap-4 border-t border-line px-4 py-2.5 text-muted">
+    <span>
+      <span data-palette-count></span> rows
+    </span>
+    <span class="hidden gap-4 sm:flex">
+      <span>↑↓ select</span>
+      <span>↵ run</span>
+      <span>esc close</span>
+    </span>
+  </div>
+
+  <script
+    type="application/json"
+    data-palette-commands
+    set:html={JSON.stringify({ commands, groupLabel })}
+  />
+</dialog>
+
+<script>
+  type Run =
+    | { type: 'href'; href: string }
+    | { type: 'external'; href: string }
+    | { type: 'download'; href: string }
+    | { type: 'skills'; category: string | null; href: string }
+    | { type: 'theme'; theme: 'light' | 'dark' }
+    | { type: 'event'; name: string }
+    | { type: 'output'; lines: string[]; tone: 'ok' | 'error' };
+  interface Command {
+    id: string;
+    group: 'nav' | 'query' | 'action' | 'secret';
+    query: string;
+    desc: string;
+    run: Run;
+    requires?: string;
+  }
+
+  const dialog = document.querySelector<HTMLDialogElement>('[data-palette]');
+
+  if (dialog) {
+    const input = dialog.querySelector<HTMLInputElement>('[data-palette-input]')!;
+    const list = dialog.querySelector<HTMLUListElement>('[data-palette-results]')!;
+    const output = dialog.querySelector<HTMLPreElement>('[data-palette-output]')!;
+    const count = dialog.querySelector<HTMLElement>('[data-palette-count]')!;
+    const form = dialog.querySelector<HTMLFormElement>('[data-palette-form]')!;
+    const data = JSON.parse(dialog.querySelector('[data-palette-commands]')!.textContent!) as {
+      commands: Command[];
+      groupLabel: Record<string, string>;
+    };
+    const available = () =>
+      data.commands.filter((c) => !c.requires || document.querySelector(c.requires));
+
+    let results: Command[] = [];
+    let active = 0;
+
+    const normalise = (s: string) =>
+      s.toLowerCase().replace(/\s+/g, ' ').replace(/;\s*$/, '').trim();
+
+    function search(raw: string): Command[] {
+      const q = normalise(raw);
+      const commands = available();
+      if (!q || q === '\\?' || q === '\\help' || q === 'help') {
+        return commands.filter((c) => c.group !== 'secret');
+      }
+      const tokens = q.split(' ');
+      return commands.filter((c) => {
+        const query = normalise(c.query);
+        if (c.group === 'secret') return q.length >= 4 && query.startsWith(q);
+        const hay = `${query} ${c.desc.toLowerCase()}`;
+        return tokens.every((t) => hay.includes(t));
+      });
+    }
+
+    /* SQL keyword highlighting for result rows. */
+    const KEYWORDS = /\b(SELECT|FROM|WHERE|DROP|TABLE)\b|(\\[a-z?]+)|('[^']*')/g;
+    function highlight(text: string): Node[] {
+      const nodes: Node[] = [];
+      let last = 0;
+      for (const m of text.matchAll(KEYWORDS)) {
+        if (m.index! > last) nodes.push(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement('span');
+        span.className = m[3] ? 'text-muted' : 'text-clean';
+        span.textContent = m[0];
+        nodes.push(span);
+        last = m.index! + m[0].length;
+      }
+      nodes.push(document.createTextNode(text.slice(last)));
+      return nodes;
+    }
+
+    function render() {
+      list.replaceChildren();
+      let lastGroup = '';
+      results.forEach((cmd, i) => {
+        if (cmd.group !== lastGroup && cmd.group !== 'secret') {
+          lastGroup = cmd.group;
+          const heading = document.createElement('li');
+          heading.setAttribute('role', 'presentation');
+          heading.className = 'label px-3 pt-3 pb-1 text-subtle first:pt-1';
+          heading.textContent = data.groupLabel[cmd.group] ?? cmd.group;
+          list.append(heading);
+        }
+        const li = document.createElement('li');
+        li.id = `palette-opt-${cmd.id}`;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', String(i === active));
+        li.dataset.index = String(i);
+        li.className =
+          'flex cursor-pointer flex-col gap-0.5 rounded-md px-3 py-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 aria-selected:bg-bg';
+        const q = document.createElement('span');
+        q.className = 'font-mono text-xs break-all text-fg sm:text-sm';
+        q.append(...highlight(cmd.query));
+        li.append(q);
+        if (cmd.desc) {
+          const d = document.createElement('span');
+          d.className = 'shrink-0 text-xs text-muted sm:max-w-[45%] sm:truncate';
+          d.textContent = cmd.desc;
+          li.append(d);
+        }
+        list.append(li);
+      });
+      count.textContent = String(results.length);
+      const current = results[active];
+      input.setAttribute('aria-activedescendant', current ? `palette-opt-${current.id}` : '');
+      list.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function showOutput(lines: string[], tone: 'ok' | 'error') {
+      output.hidden = false;
+      output.className = output.className.replace(/\btext-(dirty|fg)\b/g, '');
+      output.classList.add(tone === 'error' ? 'text-dirty' : 'text-fg');
+      output.textContent = lines.join('\n');
+    }
+
+    function update() {
+      output.hidden = true;
+      results = search(input.value);
+      active = 0;
+      render();
+    }
+
+    function setTheme(theme: 'light' | 'dark') {
+      if (document.documentElement.dataset.theme === theme) return;
+      document.querySelector<HTMLButtonElement>('[data-theme-toggle]')?.click();
+    }
+
+    function execute(cmd: Command | undefined) {
+      if (!cmd) {
+        const word = input.value.trim().split(/\s+/)[0] ?? '';
+        if (!word) return;
+        showOutput(
+          [`ERROR:  syntax error at or near "${word}"`, 'HINT:  type \\? to list commands'],
+          'error',
+        );
+        return;
+      }
+      const run = cmd.run;
+      if (run.type === 'output') return showOutput(run.lines, run.tone);
+
+      dialog!.close();
+      switch (run.type) {
+        case 'href':
+          location.href = run.href;
+          break;
+        case 'external':
+          window.open(run.href, '_blank', 'noopener,noreferrer');
+          break;
+        case 'download': {
+          const a = Object.assign(document.createElement('a'), { href: run.href, download: '' });
+          a.click();
+          break;
+        }
+        case 'skills':
+          if (document.querySelector('[data-schema]')) {
+            window.dispatchEvent(new CustomEvent('skills:filter', { detail: run.category }));
+            document.getElementById('skills')?.scrollIntoView();
+          } else {
+            location.href = run.href;
+          }
+          break;
+        case 'theme':
+          setTheme(run.theme);
+          break;
+        case 'event':
+          window.dispatchEvent(new CustomEvent(run.name));
+          document.getElementById('main')?.scrollIntoView();
+          break;
+      }
+    }
+
+    function open() {
+      if (dialog!.open) return;
+      input.value = '';
+      update();
+      dialog!.showModal();
+      input.focus();
+    }
+
+    /* Events */
+    input.addEventListener('input', update);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!results.length) return;
+        active = (active + (e.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length;
+        render();
+      }
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      execute(results[active]);
+    });
+    list.addEventListener('click', (e) => {
+      const li = (e.target as Element).closest<HTMLElement>('[role="option"]');
+      if (li) execute(results[Number(li.dataset.index)]);
+    });
+    list.addEventListener('mousemove', (e) => {
+      const li = (e.target as Element).closest<HTMLElement>('[role="option"]');
+      const i = li ? Number(li.dataset.index) : -1;
+      if (i >= 0 && i !== active) {
+        active = i;
+        render();
+      }
+    });
+    // Click on the backdrop closes.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+
+    document
+      .querySelectorAll('[data-palette-open]')
+      .forEach((btn) => btn.addEventListener('click', open));
+    document.addEventListener('keydown', (e) => {
+      const el = e.target as HTMLElement;
+      const typing = el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        open();
+      } else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        open();
+      }
+    });
+  }
+</script>

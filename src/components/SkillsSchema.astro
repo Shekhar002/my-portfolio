@@ -7,21 +7,12 @@
  * With JS: data_type filter chips and sortable headers rewrite the query live,
  * the row count updates, and proficiency bars fill in on first view.
  */
-import { getCollection, type CollectionEntry } from 'astro:content';
-
-type Category = CollectionEntry<'skills'>['data']['category'];
-
-/** Display order and SQL-ish type names. */
-const categories: Record<Category, { order: number; label: string }> = {
-  sql: { order: 1, label: 'sql' },
-  etl: { order: 2, label: 'etl' },
-  programming: { order: 3, label: 'programming' },
-  ml: { order: 4, label: 'ml' },
-  bi: { order: 5, label: 'bi_visualisation' },
-  platform: { order: 6, label: 'platform' },
-  frontend: { order: 7, label: 'frontend' },
-};
-const levels = { expert: 3, advanced: 2, working: 1 } as const;
+import { getCollection } from 'astro:content';
+import {
+  SKILL_CATEGORIES as categories,
+  SKILL_LEVELS as levels,
+  type SkillCategory as Category,
+} from '../lib/skills';
 
 const skills = (await getCollection('skills')).sort(
   (a, b) =>
@@ -315,6 +306,20 @@ const columns = [
         apply();
       }),
     );
+
+    // The command palette can filter this table: a `skills:filter` event on this
+    // page, or ?skills=<category> when arriving from another page.
+    const applyExternal = (category: string | null) => {
+      selected.clear();
+      if (category && typeLabel.has(category)) selected.add(category);
+      sort = null;
+      apply();
+    };
+    window.addEventListener('skills:filter', (e) =>
+      applyExternal((e as CustomEvent<string | null>).detail),
+    );
+    const fromUrl = new URLSearchParams(location.search).get('skills');
+    if (fromUrl) applyExternal(fromUrl);
 
     apply();
 

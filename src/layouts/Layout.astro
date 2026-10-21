@@ -1,5 +1,6 @@
 ---
 import { Font } from 'astro:assets';
+import CommandPalette from '../components/CommandPalette.astro';
 import '../styles/global.css';
 import { url } from '../lib/url';
 
@@ -44,5 +45,6 @@ const {
   </head>
   <body class="bg-bg text-fg">
     <slot />
+    <CommandPalette />
   </body>
 </html>

@@ -117,6 +117,7 @@
     });
 
     replay?.addEventListener('click', () => field.replay());
+    window.addEventListener('hero:replay', () => field.replay());
   }
 
   if (!reducedMotion && !saveData && webglAvailable()) {
