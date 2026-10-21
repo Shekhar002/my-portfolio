@@ -16,10 +16,26 @@
       "cv": "/cv/Shekhar-Tyagi-CV.pdf"
     },
     "quickFacts": [
-      { "label": "Based", "value": "Melbourne, VIC" },
-      { "label": "Focus", "value": "HR & payroll data migration" },
-      { "label": "Daily tools", "value": "SQL · SAP HANA · Python" },
-      { "label": "Study", "value": "Master of Data Science, Monash" }
-    ]
+      {
+        "label": "Based",
+        "value": "Melbourne, VIC"
+      },
+      {
+        "label": "Focus",
+        "value": "HR & payroll data migration"
+      },
+      {
+        "label": "Daily tools",
+        "value": "SQL · SAP HANA · Python"
+      },
+      {
+        "label": "Study",
+        "value": "Master of Data Science, Monash"
+      }
+    ],
+    "contact": {
+      "heading": "Let's move some data",
+      "blurb": "Working on a data migration, an ETL pipeline or a SuccessFactors data problem? I'm always happy to talk data. LinkedIn is the best way to reach me."
+    }
   }
 }

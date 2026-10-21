@@ -3,7 +3,7 @@ title: Rescuing a payroll migration
 client: Leading ANZ beverage manufacturer
 sector: Beverage / FMCG
 period: { start: 2025-09, end: 2026-08 }
-summary: Took over a stalled third-party migration and moved 4,200+ employees' AU and NZ payroll data into SAP SuccessFactors ahead of go-live, rebuilding client trust through full traceability.
+summary: Took over a third-party migration that had lost the client's trust and moved 4,200+ employees' AU and NZ payroll data into SAP SuccessFactors ahead of go-live, rebuilding client trust through full traceability.
 source: [ADP, Chris21]
 target: [SAP SuccessFactors Employee Central, Employee Central Payroll]
 stack: [SAP HANA flowgraphs, SQL, UNION / CASE logic, window functions]

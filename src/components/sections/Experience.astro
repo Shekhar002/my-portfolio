@@ -1,0 +1,168 @@
+---
+/**
+ * Static experience timeline. Employers are top-level nodes; client
+ * engagements hang off them like branches in a flowgraph. Phase 3 replaces
+ * the connectors with the animated flowgraph island; this stays the fallback.
+ */
+import { getCaseStudies, getExperienceTree } from '../../lib/content';
+import { formatRange } from '../../lib/format';
+import { url } from '../../lib/url';
+import MetricList from '../MetricList.astro';
+import StageHeader from '../StageHeader.astro';
+
+const { career, beyond } = await getExperienceTree();
+const caseStudies = new Map((await getCaseStudies()).map((p) => [p.id, p.data.title]));
+
+const kindLabel: Record<string, string> = {
+  client: 'Client engagement',
+  project: 'Internal project',
+};
+---
+
+<section id="experience" aria-labelledby="experience-title" class="page scroll-mt-16 pt-section">
+  <StageHeader stage="transform" title="Experience" id="experience-title" />
+
+  <ol class="space-y-20">
+    {career.map((job) => (
+      <li class="grid gap-6 md:grid-cols-[11rem_1fr] md:gap-10">
+        <p class="label pt-2 text-muted">
+          {formatRange(job.data.period.start, job.data.period.end)}
+        </p>
+
+        <div>
+          <h3 class="font-display text-display-sm uppercase">{job.data.org}</h3>
+          <p class="mt-2 text-fg">
+            {job.data.roles.join(' → ')}
+            {job.data.location && <span class="text-muted"> · {job.data.location}</span>}
+          </p>
+          <p class="mt-4 max-w-2xl text-muted">{job.data.summary}</p>
+
+          {job.data.highlights.length > 0 && (
+            <ul class="mt-6 max-w-2xl space-y-2 text-muted">
+              {job.data.highlights.map((h) => (
+                <li class="flex gap-3">
+                  <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 bg-clean" />
+                  <span>{h}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {job.data.metrics.length > 0 && (
+            <MetricList metrics={job.data.metrics} class="mt-8 max-w-3xl" />
+          )}
+
+          {job.data.caseStudies.length > 0 && (
+            <p class="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+              {job.data.caseStudies.map((cs) => (
+                <a
+                  href={url(`/work/${cs.id}/`)}
+                  class="label text-clean underline-offset-4 hover:underline"
+                >
+                  Case study: {caseStudies.get(cs.id)} →
+                </a>
+              ))}
+            </p>
+          )}
+
+          {job.children.length > 0 && (
+            <ol class="relative mt-10 space-y-4 border-l border-line pl-6 md:pl-8">
+              {job.children.map((child) => (
+                <li class="relative">
+                  <span
+                    aria-hidden="true"
+                    class="absolute top-6 -left-6 h-px w-6 bg-line md:-left-8 md:w-8"
+                  />
+                  <details class="group rounded-lg border border-line bg-surface open:border-subtle">
+                    <summary class="flex cursor-pointer list-none flex-col gap-2 p-5 md:flex-row md:items-start md:justify-between md:gap-6 [&::-webkit-details-marker]:hidden">
+                      <div>
+                        <p class="label text-muted">
+                          {kindLabel[child.data.kind] ?? child.data.kind}
+                          {child.data.sector && ` · ${child.data.sector}`}
+                        </p>
+                        <p class="mt-2 text-lg text-fg">{child.data.org}</p>
+                        <p class="mt-1 text-muted">{child.data.roles.join(' → ')}</p>
+                      </div>
+                      <div class="label flex shrink-0 items-center gap-4 text-muted">
+                        <span>{formatRange(child.data.period.start, child.data.period.end)}</span>
+                        <span
+                          aria-hidden="true"
+                          class="inline-block transition-transform group-open:rotate-45"
+                        >
+                          +
+                        </span>
+                      </div>
+                    </summary>
+
+                    <div class="border-t border-line p-5">
+                      <p class="max-w-2xl text-fg">{child.data.summary}</p>
+                      <ul class="mt-4 max-w-2xl space-y-2 text-muted">
+                        {child.data.highlights.map((h) => (
+                          <li class="flex gap-3">
+                            <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 bg-clean" />
+                            <span>{h}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {child.data.metrics.length > 0 && (
+                        <MetricList
+                          metrics={child.data.metrics}
+                          size="sm"
+                          class="mt-6 sm:grid-cols-4"
+                        />
+                      )}
+                      {child.data.stack.length > 0 && (
+                        <ul class="mt-6 flex flex-wrap gap-2" aria-label="Tools used">
+                          {child.data.stack.map((s) => (
+                            <li class="label rounded-full border border-line px-3 py-1 text-muted">
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {child.data.caseStudies.length > 0 && (
+                        <p class="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+                          {child.data.caseStudies.map((cs) => (
+                            <a
+                              href={url(`/work/${cs.id}/`)}
+                              class="label text-clean underline-offset-4 hover:underline"
+                            >
+                              Case study: {caseStudies.get(cs.id)} →
+                            </a>
+                          ))}
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </li>
+    ))}
+  </ol>
+
+  {beyond.length > 0 && (
+    <div class="mt-24 grid gap-6 md:grid-cols-[11rem_1fr] md:gap-10">
+      <h3 class="label pt-1 text-muted">Beyond work</h3>
+      <ul class="divide-y divide-line border-y border-line">
+        {beyond.map((item) => (
+          <li class="grid gap-2 py-6 md:grid-cols-[1fr_auto] md:gap-8">
+            <div>
+              <p class="text-lg text-fg">{item.data.org}</p>
+              <p class="mt-1 text-muted">
+                {item.data.roles.join(' → ')}
+                {item.data.location && ` · ${item.data.location}`}
+              </p>
+              <p class="mt-3 max-w-2xl text-muted">{item.data.summary}</p>
+            </div>
+            <p class="label text-muted md:text-right">
+              {formatRange(item.data.period.start, item.data.period.end)}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</section>

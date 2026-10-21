@@ -1,0 +1,45 @@
+---
+/**
+ * Static hero. Phase 3 adds the "noise → structure" 3D point cloud behind it;
+ * this markup stays as the no-JS / reduced-motion / low-power fallback.
+ */
+import { getProfile } from '../../lib/content';
+import { url } from '../../lib/url';
+import Button from '../Button.astro';
+import StatusChip from '../StatusChip.astro';
+
+const profile = await getProfile();
+const [first, ...rest] = profile.name.split(' ');
+---
+
+<section
+  aria-labelledby="hero-title"
+  class="bg-data-grid relative flex min-h-[calc(100svh-4rem)] flex-col justify-end overflow-hidden pt-16 pb-12 md:pb-16"
+>
+  <div class="page w-full">
+    <div class="label flex flex-wrap items-center justify-between gap-3 text-muted">
+      <span>{profile.headline}</span>
+      <span>{profile.location}</span>
+    </div>
+
+    <h1 id="hero-title" class="mt-6 font-display text-display-xl uppercase">
+      <span class="block">{first}</span>
+      <span class="block">{rest.join(' ')}</span>
+    </h1>
+
+    <div class="mt-8 grid gap-8 md:mt-10 md:grid-cols-[1fr_auto] md:items-end">
+      <div class="space-y-6">
+        <p class="max-w-xl text-lg text-muted md:text-xl">{profile.tagline}</p>
+        <StatusChip status={profile.status} />
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <Button href={url(profile.links.cv)} download>
+          Download CV
+        </Button>
+        <Button href={profile.links.linkedin} variant="secondary">
+          LinkedIn
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>

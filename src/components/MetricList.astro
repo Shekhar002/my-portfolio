@@ -1,0 +1,41 @@
+---
+import { formatNumber } from '../lib/format';
+
+interface Metric {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+}
+
+interface Props {
+  metrics: Metric[];
+  size?: 'sm' | 'lg';
+  class?: string;
+}
+
+const { metrics, size = 'lg', class: className } = Astro.props;
+---
+
+<dl
+  class:list={[
+    'grid gap-px overflow-hidden rounded-lg border border-line bg-line',
+    size === 'lg'
+      ? 'grid-cols-2 max-md:[&>*:last-child:nth-child(odd)]:col-span-2 md:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]'
+      : 'grid-cols-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2',
+    className,
+  ]}
+>
+  {metrics.map((m) => (
+    <div
+      class:list={['flex flex-col-reverse justify-end bg-surface', size === 'lg' ? 'p-5' : 'p-4']}
+    >
+      <dt class="mt-2 text-sm text-muted">{m.label}</dt>
+      <dd class:list={['font-display', size === 'lg' ? 'text-display-sm' : 'text-3xl']}>
+        {m.prefix}
+        {formatNumber(m.value)}
+        {m.suffix && <span class="text-clean">{m.suffix}</span>}
+      </dd>
+    </div>
+  ))}
+</dl>

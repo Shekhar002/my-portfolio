@@ -1,17 +1,27 @@
 ---
-import { getEntry } from 'astro:content';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import About from '../components/sections/About.astro';
+import Contact from '../components/sections/Contact.astro';
+import Experience from '../components/sections/Experience.astro';
+import Hero from '../components/sections/Hero.astro';
+import Skills from '../components/sections/Skills.astro';
+import Work from '../components/sections/Work.astro';
 import Layout from '../layouts/Layout.astro';
+import { getProfile } from '../lib/content';
 
-// Placeholder until Phase 2 builds the real sections.
-const profile = await getEntry('profile', 'shekhar');
-if (!profile) throw new Error('src/content/profile.json must contain a "shekhar" entry');
-const { name, headline, tagline } = profile.data;
+const profile = await getProfile();
 ---
 
-<Layout title={`${name} · ${headline}`}>
-  <main class="bg-data-grid page flex min-h-dvh flex-col justify-center gap-6">
-    <p class="label text-muted">{headline}</p>
-    <h1 class="font-display text-display-xl uppercase">{name}</h1>
-    <p class="max-w-xl text-lg text-muted">{tagline}</p>
+<Layout title={`${profile.name} · ${profile.headline}`} description={profile.tagline}>
+  <SiteHeader />
+  <main id="main">
+    <Hero />
+    <About />
+    <Experience />
+    <Work />
+    <Skills />
+    <Contact />
   </main>
+  <SiteFooter />
 </Layout>

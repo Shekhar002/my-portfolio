@@ -1,0 +1,29 @@
+---
+import { getProfile } from '../../lib/content';
+import { url } from '../../lib/url';
+import Button from '../Button.astro';
+import StageHeader from '../StageHeader.astro';
+
+const profile = await getProfile();
+---
+
+<section
+  id="contact"
+  aria-labelledby="contact-title"
+  class="page scroll-mt-16 pt-section pb-section"
+>
+  <StageHeader stage="output" title="Contact" id="contact-title" />
+
+  <p class="font-display text-display-lg uppercase">{profile.contact.heading}</p>
+  <p class="mt-8 max-w-xl text-lg text-muted">{profile.contact.blurb}</p>
+
+  <div class="mt-10 flex flex-wrap gap-3">
+    <Button href={profile.links.linkedin}>LinkedIn</Button>
+    <Button href={profile.links.github} variant="secondary">
+      GitHub
+    </Button>
+    <Button href={url(profile.links.cv)} variant="secondary" download>
+      Download CV (PDF)
+    </Button>
+  </div>
+</section>

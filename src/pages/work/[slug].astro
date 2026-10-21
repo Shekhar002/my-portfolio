@@ -1,0 +1,104 @@
+---
+/**
+ * Case study page, laid out as a pipeline:
+ * Source → Transformation → Target, then the narrative and results.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render } from 'astro:content';
+import MetricList from '../../components/MetricList.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Layout from '../../layouts/Layout.astro';
+import { getCaseStudies, getProfile } from '../../lib/content';
+import { formatRange } from '../../lib/format';
+import { url } from '../../lib/url';
+
+export const getStaticPaths = (async () => {
+  const projects = await getCaseStudies();
+  return projects.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, next: projects[(i + 1) % projects.length] },
+  }));
+}) satisfies GetStaticPaths;
+
+const { project, next } = Astro.props;
+const { Content } = await render(project);
+const profile = await getProfile();
+const related = (await getCollection('experience')).find((e) =>
+  e.data.caseStudies.some((cs) => cs.id === project.id),
+);
+const d = project.data;
+
+const pipeline = [
+  { stage: 'Source', items: d.source, tone: 'text-dirty' },
+  { stage: 'Transform', items: d.stack, tone: 'text-fg' },
+  { stage: 'Target', items: d.target, tone: 'text-clean' },
+];
+---
+
+<Layout title={`${d.title} · ${profile.name}`} description={d.summary}>
+  <SiteHeader />
+  <main id="main">
+    <article>
+      <header class="bg-data-grid border-b border-line">
+        <div class="page pt-12 pb-16 md:pt-16 md:pb-20">
+          <a href={`${url('/')}#work`} class="label text-muted hover:text-fg">
+            ← All case studies
+          </a>
+
+          <p class="label mt-12 text-muted">
+            {d.client} · {d.sector} · {formatRange(d.period.start, d.period.end)}
+          </p>
+          <h1 class="mt-6 max-w-5xl font-display text-display-lg uppercase">{d.title}</h1>
+          <p class="mt-8 max-w-2xl text-lg text-muted md:text-xl">{d.summary}</p>
+        </div>
+      </header>
+
+      <div class="page py-16 md:py-20">
+        <!-- Pipeline strip -->
+        <ol
+          class="grid gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-3"
+          aria-label="Data pipeline"
+        >
+          {pipeline.map((step, i) => (
+            <li class="bg-surface p-6">
+              <p class="label flex items-center gap-2 text-muted">
+                <span aria-hidden="true" class="size-2 bg-clean" />
+                {String(i + 1).padStart(2, '0')} / {step.stage}
+              </p>
+              <ul class:list={['mt-4 space-y-1 font-mono text-sm', step.tone]}>
+                {step.items.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+
+        <MetricList metrics={d.metrics} class="mt-8" />
+
+        <div class="prose-case mt-16 max-w-3xl md:mt-20">
+          <Content />
+        </div>
+
+        {related && (
+          <p class="label mt-16 text-muted">
+            Part of: {related.data.org} · {related.data.roles.join(' → ')}
+          </p>
+        )}
+      </div>
+
+      {next && next.id !== project.id && (
+        <nav aria-label="Next case study" class="border-t border-line">
+          <a href={url(`/work/${next.id}/`)} class="group page block py-16 md:py-20">
+            <p class="label text-muted">Next case study →</p>
+            <p class="mt-4 font-display text-display-md uppercase transition-colors group-hover:text-clean">
+              {next.data.title}
+            </p>
+          </a>
+        </nav>
+      )}
+    </article>
+  </main>
+  <SiteFooter />
+</Layout>

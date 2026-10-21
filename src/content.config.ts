@@ -38,6 +38,7 @@ const profile = defineCollection({
       cv: z.string(),
     }),
     quickFacts: z.array(z.object({ label: z.string(), value: z.string() })),
+    contact: z.object({ heading: z.string(), blurb: z.string() }),
   }),
 });
 

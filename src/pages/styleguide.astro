@@ -243,7 +243,7 @@ const levelBar = { expert: 3, advanced: 2, working: 1 } as const;
         <ol class="mb-12 grid gap-2 sm:grid-cols-5">
           {STAGES.map((s, i) => (
             <li class="label flex items-center gap-2 rounded-lg border border-line bg-surface p-4">
-              <span aria-hidden="true" class="size-2 bg-clean-fill" />
+              <span aria-hidden="true" class="size-2 bg-clean" />
               {String(i + 1).padStart(2, '0')} / {s}
             </li>
           ))}
@@ -320,7 +320,7 @@ const levelBar = { expert: 3, advanced: 2, working: 1 } as const;
                           <span
                             class:list={[
                               'h-2 w-5 rounded-sm',
-                              n <= levelBar[s.data.level] ? 'bg-clean-fill' : 'bg-line',
+                              n <= levelBar[s.data.level] ? 'bg-clean' : 'bg-line',
                             ]}
                           />
                         ))}

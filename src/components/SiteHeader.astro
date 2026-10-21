@@ -1,0 +1,86 @@
+---
+import { getProfile } from '../lib/content';
+import { url } from '../lib/url';
+import ThemeToggle from './ThemeToggle.astro';
+
+const profile = await getProfile();
+const home = url('/');
+
+const nav = [
+  { href: `${home}#about`, label: 'About' },
+  { href: `${home}#experience`, label: 'Experience' },
+  { href: `${home}#work`, label: 'Work' },
+  { href: `${home}#skills`, label: 'Skills' },
+  { href: `${home}#contact`, label: 'Contact' },
+];
+---
+
+<a
+  href="#main"
+  class="label sr-only z-50 rounded-full bg-clean-fill px-4 py-2 text-on-fill focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+>
+  Skip to content
+</a>
+
+<header class="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
+  <div class="page flex h-16 items-center justify-between gap-6">
+    <a href={home} class="label flex items-center gap-2 text-fg">
+      <span aria-hidden="true" class="size-2 bg-clean"></span>
+      {profile.name}
+    </a>
+
+    <!-- Desktop -->
+    <nav aria-label="Primary" class="hidden md:block">
+      <ul class="flex items-center gap-7">
+        {nav.map((item) => (
+          <li>
+            <a href={item.href} class="label text-muted transition-colors hover:text-fg">
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="hidden md:block">
+      <ThemeToggle />
+    </div>
+
+    <!-- Mobile: native <details> disclosure, no JS required -->
+    <details class="group relative md:hidden">
+      <summary class="label flex cursor-pointer list-none items-center gap-2 rounded-full border border-line px-3 py-1.5 text-muted [&::-webkit-details-marker]:hidden">
+        <span class="group-open:hidden">Menu</span>
+        <span class="hidden group-open:inline">Close</span>
+      </summary>
+      <nav
+        aria-label="Primary"
+        class="absolute top-full right-0 mt-3 w-56 rounded-lg border border-line bg-surface p-2 shadow-xl"
+      >
+        <ul>
+          {nav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class="label block rounded-md px-3 py-3 text-muted hover:bg-bg hover:text-fg"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div class="border-t border-line px-3 pt-3 pb-2">
+          <ThemeToggle />
+        </div>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<script>
+  // Close the mobile menu after choosing a link.
+  document.querySelectorAll<HTMLDetailsElement>('header details').forEach((menu) => {
+    menu
+      .querySelectorAll('a')
+      .forEach((a) => a.addEventListener('click', () => (menu.open = false)));
+  });
+</script>

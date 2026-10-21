@@ -140,6 +140,61 @@
     text-transform: uppercase;
   }
 
+  /* Markdown bodies of case studies (src/content/projects/*.md) */
+  .prose-case {
+    color: var(--c-muted);
+    font-size: 1.125rem;
+    line-height: 1.7;
+
+    & > * + * {
+      margin-top: 1.25rem;
+    }
+
+    & h2 {
+      margin-top: 3.5rem;
+      color: var(--c-fg);
+      font-family: var(--font-display);
+      font-size: var(--text-display-sm);
+      line-height: var(--text-display-sm--line-height);
+      text-transform: uppercase;
+    }
+
+    & h2:first-child {
+      margin-top: 0;
+    }
+
+    & strong {
+      color: var(--c-fg);
+      font-weight: 600;
+    }
+
+    & ul {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    & li {
+      position: relative;
+      padding-left: 1.5rem;
+    }
+
+    & li::before {
+      content: '';
+      position: absolute;
+      top: 0.7em;
+      left: 0;
+      width: 0.375rem;
+      height: 0.375rem;
+      background: var(--c-clean);
+    }
+
+    & code {
+      color: var(--c-fg);
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+    }
+  }
+
   .page {
     margin-inline: auto;
     max-width: var(--container-page);

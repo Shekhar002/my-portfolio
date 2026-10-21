@@ -1,0 +1,51 @@
+---
+import { Image } from 'astro:assets';
+import headshot from '../../assets/headshot.jpg';
+import { getProfile } from '../../lib/content';
+import StageHeader from '../StageHeader.astro';
+
+const profile = await getProfile();
+const recordId = profile.name.toLowerCase().replace(/\s+/g, '_');
+---
+
+<section id="about" aria-labelledby="about-title" class="page scroll-mt-16 pt-section">
+  <StageHeader stage="extract" title="About" id="about-title" />
+
+  <div class="grid gap-12 lg:grid-cols-[1fr_20rem] lg:gap-20">
+    <div class="max-w-2xl space-y-6 text-lg leading-relaxed text-muted [&>p:first-child]:text-fg">
+      {profile.bio.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+    </div>
+
+    <!-- The headshot as a source record: photo plus key/value fields -->
+    <figure class="max-w-xs self-start overflow-hidden rounded-lg border border-line bg-surface">
+      <div class="label flex items-center justify-between border-b border-line px-4 py-3 text-muted">
+        <span>record</span>
+        <span class="text-clean">✓ valid</span>
+      </div>
+      <Image
+        src={headshot}
+        alt={`Portrait of ${profile.name}`}
+        widths={[320, 413]}
+        sizes="(min-width: 1024px) 20rem, 320px"
+        class="aspect-[413/531] w-full object-cover grayscale-[35%]"
+        loading="lazy"
+      />
+      <figcaption>
+        <dl class="divide-y divide-line font-mono text-sm">
+          <div class="flex justify-between gap-4 px-4 py-3">
+            <dt class="text-muted">id</dt>
+            <dd class="truncate">{recordId}</dd>
+          </div>
+          {profile.quickFacts.map((fact) => (
+            <div class="flex justify-between gap-4 px-4 py-3">
+              <dt class="shrink-0 text-muted">{fact.label.toLowerCase().replace(/\s+/g, '_')}</dt>
+              <dd class="text-right">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </figcaption>
+    </figure>
+  </div>
+</section>

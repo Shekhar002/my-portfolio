@@ -1,0 +1,144 @@
+---
+/**
+ * Skills as a table definition (column | type | proficiency), then study and
+ * certification. Phase 3 adds the interactive schema view on top.
+ */
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { formatRange } from '../../lib/format';
+import StageHeader from '../StageHeader.astro';
+
+const categoryOrder: Record<
+  CollectionEntry<'skills'>['data']['category'],
+  { order: number; label: string }
+> = {
+  sql: { order: 1, label: 'sql' },
+  etl: { order: 2, label: 'etl' },
+  programming: { order: 3, label: 'programming' },
+  ml: { order: 4, label: 'ml' },
+  bi: { order: 5, label: 'bi_visualisation' },
+  platform: { order: 6, label: 'platform' },
+  frontend: { order: 7, label: 'frontend' },
+};
+const levelBars = { expert: 3, advanced: 2, working: 1 } as const;
+
+const skills = (await getCollection('skills')).sort(
+  (a, b) =>
+    categoryOrder[a.data.category].order - categoryOrder[b.data.category].order ||
+    levelBars[b.data.level] - levelBars[a.data.level] ||
+    a.data.name.localeCompare(b.data.name),
+);
+const education = (await getCollection('education')).sort((a, b) => a.data.order - b.data.order);
+const certifications = await getCollection('certifications');
+---
+
+<section id="skills" aria-labelledby="skills-title" class="page scroll-mt-16 pt-section">
+  <StageHeader stage="model" title="Skills & study" id="skills-title" />
+
+  <div class="overflow-x-auto rounded-lg border border-line bg-surface">
+    <table class="w-full min-w-[36rem] font-mono text-sm">
+      <caption class="border-b border-line px-5 py-4 text-left">
+        <span class="text-clean">CREATE TABLE</span>shekhar.skills{' '}
+        <span class="text-muted">({skills.length} columns)</span>
+      </caption>
+      <thead class="label text-muted">
+        <tr class="border-b border-line">
+          <th scope="col" class="px-5 py-3 text-left font-normal">
+            column
+          </th>
+          <th scope="col" class="px-5 py-3 text-left font-normal">
+            type
+          </th>
+          <th scope="col" class="px-5 py-3 text-left font-normal">
+            proficiency
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {skills.map((s) => (
+          <tr class="border-b border-line last:border-0">
+            <th scope="row" class="px-5 py-3 text-left font-normal text-fg">
+              {s.data.name}
+              {s.data.note && <span class="text-muted"> -- {s.data.note}</span>}
+            </th>
+            <td class="px-5 py-3 text-muted">{categoryOrder[s.data.category].label}</td>
+            <td class="px-5 py-3">
+              <span class="inline-flex items-center gap-3">
+                <span aria-hidden="true" class="flex gap-1">
+                  {[1, 2, 3].map((n) => (
+                    <span
+                      class:list={[
+                        'h-2 w-5 rounded-sm',
+                        n <= levelBars[s.data.level] ? 'bg-clean' : 'bg-line',
+                      ]}
+                    />
+                  ))}
+                </span>
+                <span class="text-muted">{s.data.level}</span>
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-16 grid gap-12 md:grid-cols-2">
+    <div>
+      <h3 class="label mb-6 text-muted">Education</h3>
+      <ul class="divide-y divide-line border-y border-line">
+        {education.map((e) => (
+          <li class="py-6">
+            <p class="label text-muted">{formatRange(e.data.start, e.data.end)}</p>
+            <p class="mt-3 text-lg text-fg">{e.data.qualification}</p>
+            <p class="mt-1 text-muted">
+              {e.data.institution} · {e.data.location}
+            </p>
+            {e.data.coursework.length > 0 && (
+              <ul class="mt-4 flex flex-wrap gap-2" aria-label="Relevant coursework">
+                {e.data.coursework.map((c) => (
+                  <li class="label rounded-full border border-line px-3 py-1 text-muted">{c}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="label mb-6 text-muted">Certification</h3>
+      <ul class="divide-y divide-line border-y border-line">
+        {certifications.map((c) => (
+          <li class="flex items-start gap-4 py-6">
+            <span
+              aria-hidden="true"
+              class="label mt-1 rounded-sm bg-clean-fill px-1.5 py-0.5 text-on-fill"
+            >
+              ✓
+            </span>
+            <div>
+              <p class="text-lg text-fg">
+                {c.data.badgeUrl ? (
+                  <a
+                    href={c.data.badgeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="underline decoration-line underline-offset-4 hover:decoration-clean"
+                  >
+                    {c.data.name}
+                  </a>
+                ) : (
+                  c.data.name
+                )}
+              </p>
+              <p class="mt-1 text-muted">
+                {c.data.issuer}
+                {c.data.year && ` · ${c.data.year}`}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
