@@ -208,7 +208,7 @@ const groupLabel: Record<Exclude<Group, 'secret'>, string> = {
       autocapitalize="off"
       spellcheck="false"
       placeholder="type a command or \?"
-      class="min-w-0 flex-1 bg-transparent font-mono text-sm text-fg outline-none placeholder:text-subtle"
+      class="min-w-0 flex-1 bg-transparent font-mono text-sm text-fg outline-none placeholder:text-muted"
     />
     <kbd class="label hidden rounded border border-line px-1.5 py-0.5 text-muted sm:block">esc</kbd>
   </form>
@@ -325,7 +325,7 @@ const groupLabel: Record<Exclude<Group, 'secret'>, string> = {
           lastGroup = cmd.group;
           const heading = document.createElement('li');
           heading.setAttribute('role', 'presentation');
-          heading.className = 'label px-3 pt-3 pb-1 text-subtle first:pt-1';
+          heading.className = 'label px-3 pt-3 pb-1 text-muted first:pt-1';
           heading.textContent = data.groupLabel[cmd.group] ?? cmd.group;
           list.append(heading);
         }

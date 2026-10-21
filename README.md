@@ -1,46 +1,56 @@
-# Astro Starter Kit: Basics
+# Shekhar Tyagi · Portfolio
 
-```sh
-npm create astro@latest -- --template basics
+Personal CV site for a Technical Data Consultant (ETL on SAP HANA, SAP SuccessFactors data migration).
+The site is told as a data pipeline: **source → transform → target**.
+
+Built with [Astro](https://astro.build) and Tailwind CSS v4 as a fully static site, with a lazy-loaded three.js hero.
+
+## Run it locally
+
+```powershell
+npm install
+npm run dev        # http://localhost:4321/my-portfolio/
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+| Command           | What it does                                     |
+| ----------------- | ------------------------------------------------ |
+| `npm run dev`     | Dev server with live reload                      |
+| `npm run build`   | Production build into `dist/`                    |
+| `npm run preview` | Serve the production build locally               |
+| `npm run check`   | Type-check (also validates all content files)    |
+| `npm run lint`    | ESLint                                           |
+| `npm run format`  | Prettier                                         |
+| `npm run og`      | Regenerate social share images into `public/og/` |
 
-## 🚀 Project Structure
+## Updating content
 
-Inside of your Astro project, you'll see the following folders and files:
+All text lives in `src/content/`. Components never hard-code it, so most updates are a single file edit.
+The schemas in `src/content.config.ts` check every file at build time, so a typo in a date or a missing field fails the build instead of going live.
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+| To change…                                   | Edit                                                |
+| -------------------------------------------- | --------------------------------------------------- |
+| Name, headline, bio, links, "Currently" chip | `src/content/profile.json`                          |
+| A role or client engagement                  | `src/content/experience/<entry>.md`                 |
+| A case study                                 | `src/content/projects/<slug>.md`                    |
+| Skills and proficiency                       | `src/content/skills.json`                           |
+| Education / certifications                   | `src/content/education.json`, `certifications.json` |
+| Headshot                                     | `src/assets/headshot.jpg`                           |
+| Downloadable CV                              | `public/cv/Shekhar-Tyagi-CV.pdf`                    |
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+New experience entries and case studies appear everywhere automatically: the timeline, the flowgraph, the case study pages, the command palette and the sitemap.
 
-## 🧞 Commands
+After changing names, titles or case-study metrics, run `npm run og` to refresh the share images.
 
-All commands are run from the root of the project, from a terminal:
+**Privacy rules:** no email address or phone number anywhere (copy, PDFs, metadata), and clients are described, never named. See `CLAUDE.md`.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Deploying
 
-## 👀 Want to learn more?
+Pushing to `main` runs `.github/workflows/deploy.yml`, which type-checks, lints, builds and publishes to GitHub Pages at `https://shekhar002.github.io/my-portfolio/`.
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+GitHub Pages on a free account needs a **public** repository. In the repo settings, set **Pages → Source** to **GitHub Actions**.
+
+**Custom domain later:** set `site` to the new domain in `astro.config.mjs`, remove `base`, update `BASE` in `scripts/og-images.mjs`, re-run `npm run og`, and add the domain under **Settings → Pages**.
+
+## Easter egg
+
+Press <kbd>/</kbd> on the site.

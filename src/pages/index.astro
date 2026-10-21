@@ -8,12 +8,48 @@ import Hero from '../components/sections/Hero.astro';
 import Skills from '../components/sections/Skills.astro';
 import Work from '../components/sections/Work.astro';
 import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import headshot from '../assets/headshot.jpg';
 import { getProfile } from '../lib/content';
+import { url } from '../lib/url';
 
 const profile = await getProfile();
+const employer = (await getCollection('experience')).find((e) => e.data.kind === 'employer');
+const education = await getCollection('education');
+const certifications = await getCollection('certifications');
+const skills = await getCollection('skills');
+
+const [locality, region] = profile.location.split(',').map((part) => part.trim());
+
+// schema.org Person. Public details only: no email, phone or street address.
+const site = Astro.site!;
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profile.name,
+  jobTitle: profile.headline,
+  description: profile.tagline,
+  url: new URL(url('/'), site).href,
+  image: new URL(headshot.src, site).href,
+  sameAs: [profile.links.linkedin, profile.links.github],
+  address: { '@type': 'PostalAddress', addressLocality: locality, addressRegion: region },
+  ...(employer && { worksFor: { '@type': 'Organization', name: employer.data.org } }),
+  alumniOf: education.map((e) => ({ '@type': 'CollegeOrUniversity', name: e.data.institution })),
+  hasCredential: certifications.map((c) => ({
+    '@type': 'EducationalOccupationalCredential',
+    name: c.data.name,
+    recognizedBy: { '@type': 'Organization', name: c.data.issuer },
+  })),
+  knowsAbout: skills.filter((s) => s.data.level !== 'working').map((s) => s.data.name),
+};
 ---
 
-<Layout title={`${profile.name} · ${profile.headline}`} description={profile.tagline}>
+<Layout
+  title={`${profile.name} · ${profile.headline}`}
+  description={profile.tagline}
+  ogType="profile"
+  jsonLd={person}
+>
   <SiteHeader />
   <main id="main">
     <Hero />

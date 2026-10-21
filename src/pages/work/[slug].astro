@@ -36,7 +36,21 @@ const pipeline = [
 ];
 ---
 
-<Layout title={`${d.title} · ${profile.name}`} description={d.summary}>
+<Layout
+  title={`${d.title} · ${profile.name}`}
+  description={d.summary}
+  ogType="article"
+  ogImage={`/og/work-${project.id}.png`}
+  jsonLd={{
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: d.title,
+    description: d.summary,
+    author: { '@type': 'Person', name: profile.name, url: new URL(url('/'), Astro.site).href },
+    url: new URL(Astro.url.pathname, Astro.site).href,
+    image: new URL(url(`/og/work-${project.id}.png`), Astro.site).href,
+  }}
+>
   <SiteHeader />
   <main id="main">
     <article>

@@ -1,0 +1,55 @@
+---
+import Button from '../components/Button.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+import { getProfile } from '../lib/content';
+import { url } from '../lib/url';
+
+const profile = await getProfile();
+---
+
+<Layout title={`Page not found · ${profile.name}`} noindex>
+  <SiteHeader />
+  <main id="main" class="bg-data-grid">
+    <div class="page flex min-h-[calc(100svh-4rem)] flex-col justify-center py-16">
+      <p class="label flex items-center gap-2 text-muted">
+        <span aria-hidden="true" class="size-2 bg-dirty"></span>
+        error 404 · row not found
+      </p>
+      <h1 class="mt-6 font-display text-display-xl uppercase">0 rows</h1>
+
+      <pre class="mt-10 max-w-2xl overflow-x-auto rounded-lg border border-line bg-surface p-5 font-mono text-sm leading-relaxed"><code><span class="text-clean">SELECT</span> * <span class="text-clean">FROM</span> shekhar.pages
+<span class="text-clean">WHERE</span> path = <span class="text-muted">'<span data-missing-path>this page</span>'</span>;
+
+<span class="text-dirty">(0 rows)</span></code></pre>
+
+      <p class="mt-8 max-w-xl text-lg text-muted">
+        That page doesn't exist, or it moved during the last migration. Try the home page, or press{' '}
+        <kbd class="rounded border border-line px-1.5 font-mono text-sm">/</kbd> to query the site.
+      </p>
+
+      <div class="mt-10 flex flex-wrap gap-3">
+        <Button href={url('/')}>Back to home</Button>
+        <Button href={`${url('/')}#work`} variant="secondary">
+          Case studies
+        </Button>
+      </div>
+    </div>
+  </main>
+  <SiteFooter />
+</Layout>
+
+<script>
+  // Show the path that was requested (as text, never HTML).
+  const el = document.querySelector('[data-missing-path]');
+  if (el) {
+    let path = location.pathname;
+    try {
+      path = decodeURIComponent(path);
+    } catch {
+      /* malformed URL: show it raw */
+    }
+    el.textContent = path.slice(0, 80);
+  }
+</script>

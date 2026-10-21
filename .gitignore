@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# share-image build (scripts/og-images.mjs)
+.og-build/

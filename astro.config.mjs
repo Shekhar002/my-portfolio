@@ -1,7 +1,6 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 
-import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
@@ -11,8 +10,6 @@ export default defineConfig({
   site: 'https://shekhar002.github.io',
   base: '/my-portfolio',
   trailingSlash: 'ignore',
-
-  integrations: [react()],
 
   // Self-hosted at build time via Astro's Fonts API (no runtime request to Google/Fontsource).
   fonts: [
