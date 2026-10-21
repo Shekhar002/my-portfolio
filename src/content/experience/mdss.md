@@ -2,10 +2,9 @@
 org: Monash Data Science Society
 kind: leadership
 location: Clayton, VIC
+period: { start: 2023-09, end: 2024-12 }
 roles:
-  - title: IT and Infrastructure Director
-    start: 2023-09
-    end: 2024-12
+  - IT and Infrastructure Director
 summary: Led a team of 4 building the society's React and Tailwind website, and designed data capture tools for 150+ members.
 highlights:
   - Led a team of 4 to build the society's website in React and Tailwind CSS, lifting engagement by 30%.

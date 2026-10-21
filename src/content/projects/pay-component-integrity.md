@@ -1,10 +1,10 @@
 ---
 title: Data integrity and protection at scale
-client: EPI-USE client engagements
-sector: HR & payroll
-period: { start: 2025-06, end: present }
+client: ASX-listed health services and distribution group
+sector: Healthcare
+period: { start: 2025-10, end: 2026-08 }
 summary: Found and fixed 4,740 conflicting pay-component groups with SQL and pandas, and masked tax file and bank numbers with per-record unit tests.
-source: [Legacy HR & payroll extracts]
+source: [Legacy HR & payroll data]
 target: [SAP SuccessFactors]
 stack: [SQL EXISTS, Python (pandas), SQL masking, PASS/FAIL unit-test queries]
 metrics:

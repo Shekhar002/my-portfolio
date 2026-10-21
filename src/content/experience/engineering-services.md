@@ -3,10 +3,9 @@ org: ASX300 engineering services company
 kind: client
 parent: epi-use
 sector: Engineering services
+period: { start: 2025-06, end: present }
 roles:
-  - title: Data and Support Consultant
-    start: 2025-06
-    end: present
+  - Data and Support Consultant
 summary: Built transformation flowgraphs through a peak delivery period and advised on best-practice transformation design.
 highlights:
   - Built 10+ data transformation flowgraphs during a peak delivery period, advising the client on best-practice transformation design.

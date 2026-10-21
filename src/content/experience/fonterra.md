@@ -2,10 +2,9 @@
 org: Fonterra
 kind: internship
 location: Richmond, VIC
+period: { start: 2023-12, end: 2024-02 }
 roles:
-  - title: Data Analyst Intern (Monash Industry Team Initiative)
-    start: 2023-12
-    end: 2024-02
+  - Data Analyst Intern (Monash Industry Team Initiative)
 summary: Reconciled logistics data to 98% accuracy and prototyped a shipment-planning tool for the Executive Leadership Team.
 highlights:
   - Raised logistics data accuracy and completeness to 98% by reconciling 500+ shipment records in Excel (XLOOKUP).
@@ -16,6 +15,6 @@ metrics:
   - { value: 500, suffix: '+', label: shipment records reconciled }
   - { value: 35, suffix: '%', label: est. planning effort saved }
 stack: [Excel, React]
-caseStudy: shipment-planning
+caseStudies: [shipment-planning]
 order: 6
 ---

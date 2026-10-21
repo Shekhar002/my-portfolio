@@ -3,10 +3,9 @@ org: Leading ANZ beverage manufacturer
 kind: client
 parent: epi-use
 sector: Beverage / FMCG
+period: { start: 2025-09, end: 2026-08 }
 roles:
-  - title: Data Migration Consultant (Remediation)
-    start: 2025-09
-    end: 2026-08
+  - Data Migration Consultant (Remediation)
 summary: Took over a payroll data migration remediation from a third-party vendor and led 4,200+ employees' AU and NZ payroll data into SAP SuccessFactors ahead of go-live.
 highlights:
   - Took over a data migration remediation from a third-party vendor that had lost client trust, leading migration of 4,200+ employees' AU and NZ payroll data from ADP and Chris21.
@@ -20,6 +19,6 @@ metrics:
   - { value: 50, suffix: '+', label: transformation rules traced }
   - { value: 5, label: load cycles }
 stack: [SAP HANA flowgraphs, SQL, window functions, ADP, Chris21, SAP SuccessFactors EC, EC Payroll]
-caseStudy: payroll-remediation
+caseStudies: [payroll-remediation]
 order: 2
 ---

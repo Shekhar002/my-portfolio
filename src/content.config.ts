@@ -46,17 +46,18 @@ const experience = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/experience' }),
   schema: z.object({
     org: z.string(),
-    kind: z.enum(['employer', 'client', 'internship', 'leadership', 'project']),
+    kind: z.enum(['employer', 'client', 'internship', 'leadership', 'project', 'volunteering']),
     parent: reference('experience').optional(),
     sector: z.string().optional(),
     location: z.string().optional(),
-    /** Ordered oldest → newest; a single entry for most roles. */
-    roles: z.array(z.object({ title: z.string(), start: yearMonth, end: endDate })).min(1),
+    period: z.object({ start: yearMonth, end: endDate }),
+    /** Titles held, oldest → newest. Shown as a progression, deliberately without per-title dates. */
+    roles: z.array(z.string()).min(1),
     summary: z.string(),
     highlights: z.array(z.string()),
     metrics: z.array(metric).default([]),
     stack: z.array(z.string()).default([]),
-    caseStudy: reference('projects').optional(),
+    caseStudies: z.array(reference('projects')).default([]),
     order: z.number(),
   }),
 });
