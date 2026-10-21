@@ -41,7 +41,7 @@ New experience entries and case studies appear everywhere automatically: the tim
 
 After changing names, titles or case-study metrics, run `npm run og` to refresh the share images.
 
-**Privacy rules:** no email address or phone number anywhere (copy, PDFs, metadata), and clients are described, never named. See `CLAUDE.md`.
+**Privacy rules:** no email address or phone number anywhere (copy, PDFs, image or PDF metadata), and clients are described, never named, e.g. "Leading ANZ beverage manufacturer". Strip metadata from any new image or PDF before adding it.
 
 ## Deploying
 

@@ -3,7 +3,8 @@
  * validated against these Zod schemas at build time. A typo in a date or a
  * missing field fails the build instead of shipping a broken page.
  *
- * Client organisations are NEVER named. Use the CV descriptors (see CLAUDE.md).
+ * Client organisations are NEVER named. Use descriptors such as
+ * "ASX-listed health services and distribution group".
  */
 import { defineCollection, reference } from 'astro:content';
 import { file, glob } from 'astro/loaders';

@@ -25,3 +25,17 @@ pnpm-debug.log*
 
 # share-image build (scripts/og-images.mjs)
 .og-build/
+
+# environment files (all variants)
+.env*
+!.env.example
+
+# Windows / OneDrive
+Thumbs.db
+desktop.ini
+
+# local-only planning and AI-assistant docs (never published)
+HANDOVER.md
+CLAUDE.md
+AGENTS.md
+.claude/settings.local.json
