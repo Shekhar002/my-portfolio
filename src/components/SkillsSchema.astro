@@ -1,0 +1,335 @@
+---
+/**
+ * Skills as a schema query: each skill is a column of the table `shekhar`,
+ * listed from information_schema.columns.
+ *
+ * Without JS: the static query and the full result table.
+ * With JS: data_type filter chips and sortable headers rewrite the query live,
+ * the row count updates, and proficiency bars fill in on first view.
+ */
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+type Category = CollectionEntry<'skills'>['data']['category'];
+
+/** Display order and SQL-ish type names. */
+const categories: Record<Category, { order: number; label: string }> = {
+  sql: { order: 1, label: 'sql' },
+  etl: { order: 2, label: 'etl' },
+  programming: { order: 3, label: 'programming' },
+  ml: { order: 4, label: 'ml' },
+  bi: { order: 5, label: 'bi_visualisation' },
+  platform: { order: 6, label: 'platform' },
+  frontend: { order: 7, label: 'frontend' },
+};
+const levels = { expert: 3, advanced: 2, working: 1 } as const;
+
+const skills = (await getCollection('skills')).sort(
+  (a, b) =>
+    categories[a.data.category].order - categories[b.data.category].order ||
+    levels[b.data.level] - levels[a.data.level] ||
+    a.data.name.localeCompare(b.data.name),
+);
+
+const present = [...new Set(skills.map((s) => s.data.category))].sort(
+  (a, b) => categories[a].order - categories[b].order,
+);
+const countOf = (c: Category) => skills.filter((s) => s.data.category === c).length;
+
+const columns = [
+  { key: 'name', label: 'column_name' },
+  { key: 'type', label: 'data_type' },
+  { key: 'level', label: 'proficiency' },
+] as const;
+---
+
+<div data-schema class="overflow-hidden rounded-lg border border-line bg-surface">
+  <!-- Query editor bar -->
+  <div class="border-b border-line px-5 py-4 font-mono text-sm leading-relaxed">
+    <p class="label mb-3 flex items-center justify-between text-muted">
+      <span>query · information_schema</span>
+      <span>
+        <span data-schema-count>{skills.length}</span> rows
+      </span>
+    </p>
+    <code data-schema-query class="block text-fg">
+      <span class="text-clean">SELECT</span> column_name, data_type, proficiency
+      <span class="text-clean">FROM</span> information_schema.columns
+      <span class="text-clean">WHERE</span> table_name = <span class="text-muted">'shekhar'</span>
+      <span class="text-clean">ORDER BY</span> data_type, proficiency
+      <span class="text-clean">DESC</span>;
+    </code>
+
+    <!-- Filters (enhanced only) -->
+    <div
+      data-schema-filters
+      hidden
+      class="mt-4 flex flex-wrap gap-2"
+      role="group"
+      aria-label="Filter by data type"
+    >
+      <button
+        type="button"
+        data-filter="all"
+        aria-pressed="true"
+        class="chip label rounded-full border border-line px-3 py-1 text-muted transition-colors"
+      >
+        all <span class="opacity-60">{skills.length}</span>
+      </button>
+      {present.map((c) => (
+        <button
+          type="button"
+          data-filter={c}
+          data-label={categories[c].label}
+          aria-pressed="false"
+          class="chip label rounded-full border border-line px-3 py-1 text-muted transition-colors"
+        >
+          {categories[c].label} <span class="opacity-60">{countOf(c)}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full font-mono text-xs sm:text-sm">
+      <caption class="sr-only">
+        Skills listed as columns of the table shekhar, with data type and proficiency
+      </caption>
+      <thead class="label text-muted">
+        <tr class="border-b border-line">
+          {columns.map((col) => (
+            <th scope="col" data-sort-col={col.key} class="px-3 py-3 sm:px-5 text-left font-normal">
+              <span data-static-label>{col.label}</span>
+              <button
+                type="button"
+                data-sort={col.key}
+                hidden
+                class="label inline-flex items-center gap-1.5 text-muted transition-colors hover:text-fg"
+              >
+                {col.label}
+                <span data-sort-arrow aria-hidden="true" class="w-2 text-clean" />
+              </button>
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody data-schema-body>
+        {skills.map((s, i) => (
+          <tr
+            class="border-b border-line last:border-0"
+            data-name={s.data.name.toLowerCase()}
+            data-type={s.data.category}
+            data-type-order={categories[s.data.category].order}
+            data-level={levels[s.data.level]}
+            data-default={i}
+          >
+            <th scope="row" class="px-3 py-3 sm:px-5 text-left font-normal text-fg">
+              {s.data.name}
+              {s.data.note && <span class="text-muted"> -- {s.data.note}</span>}
+            </th>
+            <td class="px-3 py-3 sm:px-5 text-muted">{categories[s.data.category].label}</td>
+            <td class="px-3 py-3 sm:px-5">
+              <span class="inline-flex items-center gap-2 sm:gap-3">
+                <span aria-hidden="true" class="flex gap-1">
+                  {[1, 2, 3].map((n) => (
+                    <span class="h-2 w-3.5 overflow-hidden rounded-sm bg-line sm:w-5">
+                      {n <= levels[s.data.level] && (
+                        <span class="bar block size-full bg-clean" style={`--i: ${n - 1}`} />
+                      )}
+                    </span>
+                  ))}
+                </span>
+                <span class="text-muted max-sm:sr-only">{s.data.level}</span>
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .chip[aria-pressed='true'] {
+    border-color: var(--c-clean);
+    color: var(--c-fg);
+  }
+  .chip:hover {
+    border-color: var(--c-fg);
+  }
+
+  .bar {
+    transform-origin: left;
+    transition: transform 0.5s var(--ease-out-quart) calc(var(--i) * 90ms + var(--row, 0) * 25ms);
+  }
+  [data-schema][data-reveal='pending'] .bar {
+    transform: scaleX(0);
+  }
+
+  tbody tr {
+    transition: background-color 0.2s ease;
+  }
+  tbody tr:hover {
+    background: var(--c-bg);
+  }
+</style>
+
+<script>
+  type SortKey = 'name' | 'type' | 'level';
+
+  const root = document.querySelector<HTMLElement>('[data-schema]');
+
+  if (root) {
+    const body = root.querySelector<HTMLTableSectionElement>('[data-schema-body]')!;
+    const rows = [...body.querySelectorAll<HTMLTableRowElement>('tr')];
+    const query = root.querySelector<HTMLElement>('[data-schema-query]')!;
+    const count = root.querySelector<HTMLElement>('[data-schema-count]')!;
+    const filters = root.querySelector<HTMLElement>('[data-schema-filters]')!;
+    const chips = [...filters.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const sortButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-sort]')];
+
+    const typeLabel = new Map(chips.map((c) => [c.dataset.filter!, c.dataset.label ?? '']));
+    const sqlName: Record<SortKey, string> = {
+      name: 'column_name',
+      type: 'data_type',
+      level: 'proficiency',
+    };
+
+    const selected = new Set<string>();
+    let sort: { key: SortKey; dir: 'asc' | 'desc' } | null = null; // null = default order
+
+    // Reveal the interactive controls.
+    filters.hidden = false;
+    root.querySelectorAll<HTMLElement>('[data-static-label]').forEach((el) => el.remove());
+    sortButtons.forEach((b) => (b.hidden = false));
+
+    /* Build the query from small text nodes, keywords highlighted. */
+    function renderQuery(visible: number) {
+      const parts: [string, string?][] = [
+        ['SELECT', 'kw'],
+        [' column_name, data_type, proficiency\n'],
+        ['FROM', 'kw'],
+        [' information_schema.columns\n'],
+        ['WHERE', 'kw'],
+        [' table_name = '],
+        ["'shekhar'", 'str'],
+      ];
+      if (selected.size) {
+        const list = [...selected].map((t) => `'${typeLabel.get(t)}'`).join(', ');
+        parts.push(
+          ['\n  '],
+          ['AND', 'kw'],
+          [' data_type '],
+          ['IN', 'kw'],
+          [' ('],
+          [list, 'str'],
+          [')'],
+        );
+      }
+      parts.push(['\n'], ['ORDER BY', 'kw']);
+      if (sort) {
+        parts.push([` ${sqlName[sort.key]} `], [sort.dir.toUpperCase(), 'kw']);
+      } else {
+        parts.push([' data_type, proficiency '], ['DESC', 'kw']);
+      }
+      parts.push([';']);
+
+      query.replaceChildren(
+        ...parts.map(([text, kind]) => {
+          if (!kind) return document.createTextNode(text);
+          const span = document.createElement('span');
+          span.className = kind === 'kw' ? 'text-clean' : 'text-muted';
+          span.textContent = text;
+          return span;
+        }),
+      );
+      query.style.whiteSpace = 'pre-wrap';
+      count.textContent = String(visible);
+    }
+
+    function apply() {
+      // Sort
+      const ordered = [...rows].sort((a, b) => {
+        if (!sort) return Number(a.dataset.default) - Number(b.dataset.default);
+        const m = sort.dir === 'asc' ? 1 : -1;
+        if (sort.key === 'name') return m * a.dataset.name!.localeCompare(b.dataset.name!);
+        if (sort.key === 'type')
+          return (
+            m * (Number(a.dataset.typeOrder) - Number(b.dataset.typeOrder)) ||
+            Number(b.dataset.level) - Number(a.dataset.level)
+          );
+        return (
+          m * (Number(a.dataset.level) - Number(b.dataset.level)) ||
+          a.dataset.name!.localeCompare(b.dataset.name!)
+        );
+      });
+      body.replaceChildren(...ordered);
+
+      // Filter
+      let visible = 0;
+      ordered.forEach((row) => {
+        const show = !selected.size || selected.has(row.dataset.type!);
+        row.hidden = !show;
+        if (show) row.style.setProperty('--row', String(visible++));
+      });
+
+      // Controls state
+      chips.forEach((chip) => {
+        const f = chip.dataset.filter!;
+        chip.setAttribute(
+          'aria-pressed',
+          String(f === 'all' ? selected.size === 0 : selected.has(f)),
+        );
+      });
+      root!.querySelectorAll<HTMLTableCellElement>('[data-sort-col]').forEach((th) => {
+        const active = sort?.key === th.dataset.sortCol;
+        th.setAttribute(
+          'aria-sort',
+          active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+        );
+        const arrow = th.querySelector('[data-sort-arrow]');
+        if (arrow) arrow.textContent = active ? (sort!.dir === 'asc' ? '↑' : '↓') : '';
+      });
+
+      renderQuery(visible);
+    }
+
+    chips.forEach((chip) =>
+      chip.addEventListener('click', () => {
+        const f = chip.dataset.filter!;
+        if (f === 'all') selected.clear();
+        else if (selected.has(f)) selected.delete(f);
+        else selected.add(f);
+        apply();
+      }),
+    );
+
+    sortButtons.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.sort as SortKey;
+        // Cycle: asc → desc → default. Proficiency starts high-to-low.
+        const first = key === 'level' ? 'desc' : 'asc';
+        const second = first === 'asc' ? 'desc' : 'asc';
+        if (sort?.key !== key) sort = { key, dir: first };
+        else if (sort.dir === first) sort = { key, dir: second };
+        else sort = null;
+        apply();
+      }),
+    );
+
+    apply();
+
+    // Bars fill in when the table first scrolls into view.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      root.dataset.reveal = 'pending';
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry?.isIntersecting) return;
+          root.dataset.reveal = 'done';
+          io.disconnect();
+        },
+        { threshold: 0.2 },
+      );
+      io.observe(root);
+    }
+  }
+</script>

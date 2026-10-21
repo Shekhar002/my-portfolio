@@ -1,32 +1,12 @@
 ---
 /**
- * Skills as a table definition (column | type | proficiency), then study and
- * certification. Phase 3 adds the interactive schema view on top.
+ * Skills as a schema query (see SkillsSchema.astro), then study and certification.
  */
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { formatRange } from '../../lib/format';
+import SkillsSchema from '../SkillsSchema.astro';
 import StageHeader from '../StageHeader.astro';
 
-const categoryOrder: Record<
-  CollectionEntry<'skills'>['data']['category'],
-  { order: number; label: string }
-> = {
-  sql: { order: 1, label: 'sql' },
-  etl: { order: 2, label: 'etl' },
-  programming: { order: 3, label: 'programming' },
-  ml: { order: 4, label: 'ml' },
-  bi: { order: 5, label: 'bi_visualisation' },
-  platform: { order: 6, label: 'platform' },
-  frontend: { order: 7, label: 'frontend' },
-};
-const levelBars = { expert: 3, advanced: 2, working: 1 } as const;
-
-const skills = (await getCollection('skills')).sort(
-  (a, b) =>
-    categoryOrder[a.data.category].order - categoryOrder[b.data.category].order ||
-    levelBars[b.data.level] - levelBars[a.data.level] ||
-    a.data.name.localeCompare(b.data.name),
-);
 const education = (await getCollection('education')).sort((a, b) => a.data.order - b.data.order);
 const certifications = await getCollection('certifications');
 ---
@@ -34,53 +14,7 @@ const certifications = await getCollection('certifications');
 <section id="skills" aria-labelledby="skills-title" class="page scroll-mt-16 pt-section">
   <StageHeader stage="model" title="Skills & study" id="skills-title" />
 
-  <div class="overflow-x-auto rounded-lg border border-line bg-surface">
-    <table class="w-full min-w-[36rem] font-mono text-sm">
-      <caption class="border-b border-line px-5 py-4 text-left">
-        <span class="text-clean">CREATE TABLE</span>shekhar.skills{' '}
-        <span class="text-muted">({skills.length} columns)</span>
-      </caption>
-      <thead class="label text-muted">
-        <tr class="border-b border-line">
-          <th scope="col" class="px-5 py-3 text-left font-normal">
-            column
-          </th>
-          <th scope="col" class="px-5 py-3 text-left font-normal">
-            type
-          </th>
-          <th scope="col" class="px-5 py-3 text-left font-normal">
-            proficiency
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {skills.map((s) => (
-          <tr class="border-b border-line last:border-0">
-            <th scope="row" class="px-5 py-3 text-left font-normal text-fg">
-              {s.data.name}
-              {s.data.note && <span class="text-muted"> -- {s.data.note}</span>}
-            </th>
-            <td class="px-5 py-3 text-muted">{categoryOrder[s.data.category].label}</td>
-            <td class="px-5 py-3">
-              <span class="inline-flex items-center gap-3">
-                <span aria-hidden="true" class="flex gap-1">
-                  {[1, 2, 3].map((n) => (
-                    <span
-                      class:list={[
-                        'h-2 w-5 rounded-sm',
-                        n <= levelBars[s.data.level] ? 'bg-clean' : 'bg-line',
-                      ]}
-                    />
-                  ))}
-                </span>
-                <span class="text-muted">{s.data.level}</span>
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+  <SkillsSchema />
 
   <div class="mt-16 grid gap-12 md:grid-cols-2">
     <div>
