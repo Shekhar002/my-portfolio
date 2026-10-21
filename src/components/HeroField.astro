@@ -1,0 +1,130 @@
+---
+/**
+ * Background layer for the hero.
+ *
+ * - Static fallback: a CSS dot "table" (no JS, no images). It stays when motion
+ *   is reduced, data-saver is on, or WebGL is unavailable.
+ * - Enhanced: on idle, lazy-loads three.js and the point field
+ *   (src/lib/hero/field.ts), then cross-fades from the fallback.
+ *
+ * Purely decorative: hidden from assistive tech except the replay button.
+ */
+---
+
+<div
+  data-hero-field
+  class="pointer-events-none absolute inset-0 overflow-hidden"
+  aria-hidden="true"
+>
+  <!-- Static fallback: the end state of the pipeline, a loaded table -->
+  <div
+    data-hero-fallback
+    class="hero-fallback absolute inset-x-[4%] top-[6%] h-[36%] transition-opacity duration-1000 md:inset-x-auto md:top-[14%] md:right-[6%] md:h-[52%] md:w-[46%]"
+  >
+    <div class="hero-fallback-header h-3"></div>
+    <div class="hero-fallback-body mt-3 h-[calc(100%-1.5rem)]"></div>
+  </div>
+
+  <canvas
+    data-hero-canvas
+    class="absolute inset-0 size-full opacity-0 transition-opacity duration-1000"
+  ></canvas>
+</div>
+
+<!-- Stage caption, plus a replay control (only shown once the animation runs) -->
+<div
+  data-hero-caption
+  class="label pointer-events-auto absolute top-6 right-[var(--spacing-gutter)] z-10 hidden items-center gap-3 text-muted md:top-10"
+>
+  <span aria-hidden="true" class="flex items-center gap-2">
+    <span data-hero-dot class="size-2 bg-dirty transition-colors duration-500"></span>
+    <span data-hero-stage></span>
+  </span>
+  <button
+    type="button"
+    data-hero-replay
+    class="rounded-full border border-line px-2.5 py-1 transition-colors hover:border-fg hover:text-fg"
+  >
+    <span aria-hidden="true">↻</span>
+    <span class="max-md:sr-only">Replay</span>
+    <span class="sr-only">the data pipeline animation</span>
+  </button>
+</div>
+
+<style>
+  /* Fallback "table": dots on a 14px grid, header row in the clean colour, faded edges. */
+  .hero-fallback {
+    mask-image: radial-gradient(ellipse at center, #000 55%, transparent 80%);
+  }
+  .hero-fallback-header {
+    background-image: radial-gradient(var(--c-clean) 1.4px, transparent 1.8px);
+    background-size: 14px 14px;
+  }
+  .hero-fallback-body {
+    background-image: radial-gradient(var(--c-fg) 1.2px, transparent 1.6px);
+    background-size: 14px 14px;
+    opacity: 0.35;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-hero-field]');
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-canvas]');
+  const fallback = document.querySelector<HTMLElement>('[data-hero-fallback]');
+  const caption = document.querySelector<HTMLElement>('[data-hero-caption]');
+  const stageLabel = document.querySelector<HTMLElement>('[data-hero-stage]');
+  const dot = document.querySelector<HTMLElement>('[data-hero-dot]');
+  const replay = document.querySelector<HTMLButtonElement>('[data-hero-replay]');
+  const hero = root?.closest<HTMLElement>('section');
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+    ?.saveData;
+
+  function webglAvailable() {
+    try {
+      const probe = document.createElement('canvas');
+      return !!(probe.getContext('webgl2') || probe.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  }
+
+  async function enhance() {
+    if (!root || !canvas || !hero || !fallback) return;
+    const { createField } = await import('../lib/hero/field');
+    const nf = new Intl.NumberFormat('en-AU');
+
+    const field = createField({
+      canvas,
+      pointerTarget: hero,
+      onReady: () => {
+        canvas.classList.remove('opacity-0');
+        fallback.style.opacity = '0';
+        caption?.classList.replace('hidden', 'flex');
+      },
+      onStage: (stage) => {
+        if (!stageLabel || !dot) return;
+        const { records, invalid, clusters } = field.stats;
+        const text = [
+          `01 extract · ${nf.format(records)} records · ${nf.format(invalid)} invalid`,
+          `02 transform · k-means · k = ${clusters}`,
+          `03 load · ${nf.format(records)} rows ✓`,
+        ][stage];
+        stageLabel.textContent = text ?? '';
+        dot.className = `size-2 transition-colors duration-500 ${stage === 0 ? 'bg-dirty' : 'bg-clean'}`;
+      },
+    });
+
+    replay?.addEventListener('click', () => field.replay());
+  }
+
+  if (!reducedMotion && !saveData && webglAvailable()) {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 200));
+    idle(() => {
+      enhance().catch(() => {
+        /* Keep the static fallback if anything fails. */
+      });
+    });
+  }
+</script>
